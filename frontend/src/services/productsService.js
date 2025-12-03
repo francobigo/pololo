@@ -1,14 +1,18 @@
 // src/services/productsService.js
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-export async function getProducts() {
-  const res = await fetch(`${API_URL}/products`);
+export async function getProducts(category) {
+  let url = `${API_URL}/products`;
+
+  if (category) {
+    url += `?category=${encodeURIComponent(category)}`;
+  }
+
+  const res = await fetch(url);
 
   if (!res.ok) {
     throw new Error('Error al obtener productos');
   }
 
-  const data = await res.json();
-  return data;
+  return await res.json();
 }

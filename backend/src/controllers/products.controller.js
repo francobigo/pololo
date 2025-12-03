@@ -1,10 +1,12 @@
 // src/controllers/products.controller.js
 import { pool } from '../config/db.js';
 
-// GET /api/products
+// GET /api/products?category=marroquineria
 export const getProducts = async (req, res) => {
+  const { category } = req.query;
+
   try {
-    const result = await pool.query(`
+    let query = `
       SELECT 
         id,
         nombre      AS name,
@@ -15,10 +17,17 @@ export const getProducts = async (req, res) => {
         stock,
         activo      AS active
       FROM products
-      ORDER BY id;
-    `);
+    `;
+    const params = [];
 
-    // result.rows es un array con los productos
+    if (category) {
+      query += ' WHERE LOWER(categoria) = LOWER($1)';
+      params.push(category);
+    }
+
+    query += ' ORDER BY id';
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener productos:', error);
