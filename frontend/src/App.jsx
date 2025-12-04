@@ -13,6 +13,8 @@ import Remeras from "./pages/catalogo/Remeras";
 import Pantalones from "./pages/catalogo/Pantalones";
 import Buzos from "./pages/catalogo/Buzos";
 
+import DetalleProducto from "./pages/producto/DetalleProducto";
+
 // Admin
 import LoginAdmin from "./pages/LoginAdmin";
 import AdminPanel from "./pages/AdminPanel";
@@ -38,6 +40,7 @@ function App() {
                   <Route path="/catalogo/buzos" element={<Buzos />} />
                   <Route path="/contacto" element={<Contacto />} />
                   <Route path="/nosotros" element={<Nosotros />} />
+                  <Route path="/producto/:id" element={<DetalleProducto />} />
                 </Routes>
               </main>
               <Footer />

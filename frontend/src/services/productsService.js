@@ -16,3 +16,14 @@ export async function getProducts(category) {
 
   return await res.json();
 }
+export async function getProductById(id) {
+  const url = `${API_URL}/products/${id}`;
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error('Error al obtener el producto');
+  }
+
+  return await res.json();
+}

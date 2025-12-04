@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
+import { Link } from "react-router-dom";
+
 
 function Catalogo() {
   const [products, setProducts] = useState([]);
@@ -34,6 +36,10 @@ function Catalogo() {
       <div className="row">
         {products.map((p) => (
           <div key={p.id} className="col-md-4 mb-4">
+            <Link
+              to={`/producto/${p.id}`}
+              className="text-decoration-none text-dark"
+            >
             <div className="card h-100">
               {p.image && (
                 <img
@@ -51,6 +57,7 @@ function Catalogo() {
                 </small>
               </div>
             </div>
+            </Link>
           </div>
         ))}
       </div>

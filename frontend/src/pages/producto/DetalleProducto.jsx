@@ -1,0 +1,59 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getProductById } from "../../services/productsService";
+
+function DetalleProducto() {
+  const { id } = useParams(); // lee el id de la URL
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getProductById(id);
+        setProduct(data);
+      } catch (err) {
+        console.error(err);
+        setError("No se pudo cargar el producto");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) return <div className="container mt-4"><p>Cargando producto...</p></div>;
+  if (error)   return <div className="container mt-4"><p>{error}</p></div>;
+  if (!product) return <div className="container mt-4"><p>Producto no encontrado.</p></div>;
+
+  return (
+    <div className="container mt-4">
+      <div className="row">
+        
+        {/* IMAGEN */}
+        <div className="col-md-6 mb-4">
+          <img 
+            src={product.image}
+            alt={product.name}
+            className="img-fluid rounded"
+          />
+        </div>
+
+        {/* INFORMACIÓN */}
+        <div className="col-md-6">
+          <h2>{product.name}</h2>
+          <p className="text-muted">{product.category}</p>
+          <h4 className="fw-bold mt-3">${product.price}</h4>
+
+          <p className="mt-3">{product.description}</p>
+
+          <button className="btn btn-primary mt-3">
+            Agregar al carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DetalleProducto;
