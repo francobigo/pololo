@@ -16,14 +16,14 @@ import Buzos from "./pages/catalogo/Buzos";
 import DetalleProducto from "./pages/producto/DetalleProducto";
 import Carrito from "./pages/carrito/Carrito";
 
-import AdminProductos from "./pages/admin/AdminProductos";
-
-
-
 // Admin
 import LoginAdmin from "./pages/LoginAdmin";
 import AdminPanel from "./pages/AdminPanel";
 import { RequireAuth } from "./components/RequireAuth";
+import AdminProductos from "./pages/admin/AdminProductos";
+import AdminNuevoProducto from "./pages/admin/AdminNuevoProducto";
+import AdminEditarProducto from "./pages/admin/AdminEditarProducto";
+
 
 function App() {
   return (
@@ -48,6 +48,8 @@ function App() {
                   <Route path="/producto/:id" element={<DetalleProducto />} />
                   <Route path="/carrito" element={<Carrito />} />
                   <Route path="/admin/productos" element={<AdminProductos />} />
+                  <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
+                  <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />
 
                 </Routes>
               </main>

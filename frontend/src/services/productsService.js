@@ -39,3 +39,33 @@ export async function deleteProduct(id) {
 
   return await res.json(); // { message: 'Producto eliminado correctamente' }
 }
+
+
+export async function createProduct(productData) {
+  const res = await fetch(`${API_URL}/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(productData),
+  });
+
+  if (!res.ok) {
+    throw new Error('Error al crear el producto');
+  }
+
+  return await res.json();
+}
+
+export async function updateProduct(id, productData) {
+  const res = await fetch(`${API_URL}/products/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(productData),
+  });
+
+  if (!res.ok) {
+    throw new Error('Error al actualizar el producto');
+  }
+
+  return await res.json();
+}
+
