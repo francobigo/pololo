@@ -88,7 +88,7 @@ function Navbar() {
           </Link>
 
           {/* ADMIN */}
-          <Link to="/admin/login" className="nav-link text-secondary">
+          <Link to="/admin/productos" className="nav-link text-secondary">
             Admin
           </Link>
 

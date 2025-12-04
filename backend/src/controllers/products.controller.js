@@ -66,3 +66,116 @@ export const getProductById = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener producto' });
   }
 };
+
+// CREAR PRODUCTO  (POST /api/products)
+export const createProduct = async (req, res) => {
+  const { name, category, description, price, image, stock, active } = req.body;
+
+  if (!name || !category || !price) {
+    return res.status(400).json({ message: 'Nombre, categoría y precio son obligatorios' });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      INSERT INTO products (nombre, categoria, descripcion, precio, imagen_url, stock, activo)
+      VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, true))
+      RETURNING 
+        id,
+        nombre      AS name,
+        categoria   AS category,
+        descripcion AS description,
+        precio      AS price,
+        imagen_url  AS image,
+        stock,
+        activo      AS active
+      `,
+      [
+        name,
+        category,
+        description || '',
+        price,
+        image || '',
+        stock ?? 0,
+        active,
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al crear producto:', error);
+    res.status(500).json({ message: 'Error al crear producto' });
+  }
+};
+
+// ACTUALIZAR PRODUCTO (PUT /api/products/:id)
+export const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const { name, category, description, price, image, stock, active } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE products
+      SET
+        nombre      = $1,
+        categoria   = $2,
+        descripcion = $3,
+        precio      = $4,
+        imagen_url  = $5,
+        stock       = $6,
+        activo      = $7
+      WHERE id = $8
+      RETURNING 
+        id,
+        nombre      AS name,
+        categoria   AS category,
+        descripcion AS description,
+        precio      AS price,
+        imagen_url  AS image,
+        stock,
+        activo      AS active
+      `,
+      [
+        name,
+        category,
+        description || '',
+        price,
+        image || '',
+        stock ?? 0,
+        active ?? true,
+        id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al actualizar producto:', error);
+    res.status(500).json({ message: 'Error al actualizar producto' });
+  }
+};
+
+// ELIMINAR PRODUCTO (DELETE /api/products/:id)
+export const deleteProduct = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM products WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    res.json({ message: 'Producto eliminado correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar producto:', error);
+    res.status(500).json({ message: 'Error al eliminar producto' });
+  }
+};

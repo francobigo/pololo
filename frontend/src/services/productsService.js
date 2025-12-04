@@ -27,3 +27,15 @@ export async function getProductById(id) {
 
   return await res.json();
 }
+
+export async function deleteProduct(id) {
+  const res = await fetch(`${API_URL}/products/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) {
+    throw new Error('Error al eliminar el producto');
+  }
+
+  return await res.json(); // { message: 'Producto eliminado correctamente' }
+}
