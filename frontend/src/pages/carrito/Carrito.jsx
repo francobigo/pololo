@@ -12,6 +12,27 @@ function Carrito() {
     clearCart,
   } = useCart();
 
+  // 👉 PONÉ ACÁ EL NÚMERO DE WHATSAPP DEL NEGOCIO
+  // Formato: sin + ni 0 ni 15, todo junto (ej: 5492611234567)
+  const WHATSAPP_NUMBER = "5493516178552";
+
+  const handleSendWhatsApp = () => {
+    if (cart.length === 0) return;
+
+    let message = "Hola! Quiero hacer el siguiente pedido:%0A%0A";
+
+    cart.forEach((item) => {
+      const line = `- ${item.quantity}x ${item.name} ($${item.price})`;
+      message += line + "%0A";
+    });
+
+    message += `%0ATotal: $${totalPrice}`;
+
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+
+    window.open(url, "_blank");
+  };
+
   if (cart.length === 0) {
     return (
       <div className="container mt-4">
@@ -91,10 +112,13 @@ function Carrito() {
           Vaciar carrito
         </button>
 
-        <Link to="/checkout" className="btn btn-success">
-          Continuar al pedido
-        </Link>
-
+        {/* 👉 BOTÓN PARA ENVIAR PEDIDO POR WHATSAPP */}
+        <button
+          className="btn btn-success"
+          onClick={handleSendWhatsApp}
+        >
+          Enviar pedido por WhatsApp
+        </button>
       </div>
 
     </div>
