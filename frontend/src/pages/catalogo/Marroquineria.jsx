@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUrl"; // 👈 IMPORTANTE
 
 function Marroquineria() {
   const [products, setProducts] = useState([]);
@@ -10,7 +11,6 @@ function Marroquineria() {
   useEffect(() => {
     (async () => {
       try {
-        // importante: usar el valor que guardás en la BD, ej: 'marroquineria'
         const data = await getProducts("marroquineria");
         setProducts(data);
       } catch (err) {
@@ -40,23 +40,27 @@ function Marroquineria() {
               to={`/producto/${p.id}`}
               className="text-decoration-none text-dark"
             >
-            <div className="card h-100">
-              {p.image && (
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="card-img-top"
-                />
-              )}
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title">{p.name}</h5>
-                <p className="card-text flex-grow-1">{p.description}</p>
-                <p className="fw-bold mb-1">${p.price}</p>
-                <small className="text-muted">
-                  Categoría: {p.category}
-                </small>
+              <div className="card h-100">
+
+                {/* 👇 CAMBIO PRINCIPAL */}
+                {p.image && (
+                  <img
+                    src={getImageUrl(p.image)}
+                    alt={p.name}
+                    className="card-img-top"
+                  />
+                )}
+
+                <div className="card-body d-flex flex-column">
+                  <h5 className="card-title">{p.name}</h5>
+                  <p className="card-text flex-grow-1">{p.description}</p>
+                  <p className="fw-bold mb-1">${p.price}</p>
+                  <small className="text-muted">
+                    Categoría: {p.category}
+                  </small>
+                </div>
+
               </div>
-            </div>
             </Link>
           </div>
         ))}
