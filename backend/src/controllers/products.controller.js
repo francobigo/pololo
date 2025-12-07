@@ -1,9 +1,11 @@
 // src/controllers/products.controller.js
 import { pool } from '../config/db.js';
 
-// GET /api/products?category=marroquineria
+// (duplicate simple getProducts removed; the more complete getProducts implementation remains below)
+
+// OBTENER PRODUCTOS (GET /api/products)
 export const getProducts = async (req, res) => {
-  const { category } = req.query;
+  const { category, includeInactive } = req.query;
 
   try {
     let query = `
@@ -18,11 +20,24 @@ export const getProducts = async (req, res) => {
         activo      AS active
       FROM products
     `;
+
     const params = [];
+    const conditions = [];
+
+    // 🔹 Si NO pide incluir inactivos, solo devolvemos activos
+    if (includeInactive !== 'true') {
+      conditions.push('activo = true');
+    }
 
     if (category) {
-      query += ' WHERE LOWER(categoria) = LOWER($1)';
+      conditions.push(
+        'LOWER(categoria) = LOWER($' + (params.length + 1) + ')'
+      );
       params.push(category);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     query += ' ORDER BY id';
@@ -34,14 +49,15 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener productos' });
   }
 };
-// GET /api/products/:id
+
+// OBTENER UN PRODUCTO POR ID (GET /api/products/:id)
 export const getProductById = async (req, res) => {
   const { id } = req.params;
 
   try {
     const result = await pool.query(
       `
-      SELECT 
+      SELECT
         id,
         nombre      AS name,
         categoria   AS category,
@@ -62,10 +78,11 @@ export const getProductById = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error al obtener producto por id:', error);
+    console.error('Error al obtener producto por ID:', error);
     res.status(500).json({ message: 'Error al obtener producto' });
   }
 };
+
 
 // CREAR PRODUCTO  (POST /api/products)
 export const createProduct = async (req, res) => {

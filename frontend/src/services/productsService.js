@@ -17,6 +17,19 @@ export async function getProducts(category) {
   return await res.json();
 }
 
+export async function getAllProductsAdmin() {
+  const url = `${API_URL}/products?includeInactive=true`;
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error('Error al obtener productos (admin)');
+  }
+
+  return await res.json();
+}
+
+
 export async function getProductById(id) {
   const url = `${API_URL}/products/${id}`;
 

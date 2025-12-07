@@ -1,7 +1,8 @@
 // src/pages/admin/AdminProductos.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, deleteProduct } from "../../services/productsService";
+import { getAllProductsAdmin, deleteProduct } from "../../services/productsService";
+
 
 function AdminProductos() {
   const [products, setProducts] = useState([]);
@@ -11,7 +12,7 @@ function AdminProductos() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getProducts(); // trae todos
+        const data = await getAllProductsAdmin(); // trae todos
         setProducts(data);
       } catch (err) {
         console.error(err);
