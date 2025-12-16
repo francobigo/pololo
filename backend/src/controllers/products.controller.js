@@ -5,7 +5,7 @@ import { pool } from '../config/db.js';
 
 // OBTENER PRODUCTOS (GET /api/products)
 export const getProducts = async (req, res) => {
-  const { category, includeInactive } = req.query;
+  const { category, includeInactive, search } = req.query;
 
   try {
     let query = `
@@ -35,6 +35,15 @@ export const getProducts = async (req, res) => {
       );
       params.push(category);
     }
+
+    if (search) {
+  conditions.push(
+    `(LOWER(nombre) LIKE LOWER($${params.length + 1})
+      OR LOWER(descripcion) LIKE LOWER($${params.length + 1}))`
+  );
+  params.push(`%${search}%`);
+}
+
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');

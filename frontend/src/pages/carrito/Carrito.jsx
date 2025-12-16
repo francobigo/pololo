@@ -1,6 +1,8 @@
 // src/pages/carrito/Carrito.jsx
 import { useCart } from "../../context/CartContext";
 import { Link } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUrl"; // 👈 IMPORTANTE
+
 
 function Carrito() {
   const {
@@ -57,7 +59,7 @@ function Carrito() {
             {/* IMAGEN */}
             <div className="col-md-3">
               <img
-                src={item.image}
+                src={getImageUrl(item.image)}
                 className="img-fluid rounded-start"
                 alt={item.name}
               />

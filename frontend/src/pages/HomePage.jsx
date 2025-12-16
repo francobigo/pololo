@@ -1,4 +1,5 @@
 // src/pages/HomePage.jsx
+
 function HomePage() {
   return (
     <section>

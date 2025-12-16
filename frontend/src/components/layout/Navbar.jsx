@@ -1,9 +1,20 @@
 // src/components/Navbar.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useState } from "react";
 
 function Navbar() {
   const { totalItems } = useCart();
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (search.trim() !== "") {
+      navigate(`/catalogo?search=${encodeURIComponent(search)}`);
+    }
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light px-3">
@@ -72,10 +83,20 @@ function Navbar() {
 
         </ul>
 
+        {/* 🔍 BUSCADOR */}
+        <form className="d-flex me-3" onSubmit={handleSearch}>
+          <input
+            className="form-control"
+            type="search"
+            placeholder="Buscar productos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </form>
+
         {/* CARRITO + ADMIN */}
         <div className="d-flex align-items-center gap-3">
 
-          {/* BOTÓN CARRITO */}
           <Link to="/carrito" className="btn btn-outline-primary position-relative">
             🛒 Carrito
             {totalItems > 0 && (
@@ -87,7 +108,6 @@ function Navbar() {
             )}
           </Link>
 
-          {/* ADMIN */}
           <Link to="/admin/productos" className="nav-link text-secondary">
             Admin
           </Link>
