@@ -2,12 +2,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllProductsAdmin, deleteProduct } from "../../services/productsService";
+import { getImageUrl } from "../../utils/imageUrl";
 
 
 function AdminProductos() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+
 
   useEffect(() => {
     (async () => {
@@ -52,6 +57,23 @@ function AdminProductos() {
     );
   }
 
+  const filteredProducts = products.filter((p) => {
+  const matchSearch = p.name
+    .toLowerCase()
+    .includes(search.toLowerCase());
+
+  const matchCategory =
+    !categoryFilter || p.category === categoryFilter;
+
+  const matchActive =
+    activeFilter === "all" ||
+    (activeFilter === "active" && p.active) ||
+    (activeFilter === "inactive" && !p.active);
+
+  return matchSearch && matchCategory && matchActive;
+});
+
+
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -62,6 +84,51 @@ function AdminProductos() {
         </Link>
       </div>
 
+              <div className="card mb-3">
+          <div className="card-body">
+            <div className="row g-3">
+
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Buscar por nombre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <select
+                  className="form-select"
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="">Todas las categorías</option>
+                  <option value="remeras">Remeras</option>
+                  <option value="pantalones">Pantalones</option>
+                  <option value="buzos">Buzos</option>
+                  <option value="marroquineria">Marroquinería</option>
+                </select>
+              </div>
+
+              <div className="col-md-4">
+                <select
+                  className="form-select"
+                  value={activeFilter}
+                  onChange={(e) => setActiveFilter(e.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Solo activos</option>
+                  <option value="inactive">Solo inactivos</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+
       {products.length === 0 ? (
         <p>No hay productos cargados.</p>
       ) : (
@@ -70,6 +137,7 @@ function AdminProductos() {
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Imagen</th>
                 <th>Nombre</th>
                 <th>Categoría</th>
                 <th>Precio</th>
@@ -79,9 +147,27 @@ function AdminProductos() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {filteredProducts.map((p) => (
                 <tr key={p.id}>
                   <td>{p.id}</td>
+                  {/* IMAGEN */}
+                  <td>
+                    {p.image ? (
+                      <img
+                        src={getImageUrl(p.image)}
+                        alt={p.name}
+                        style={{
+                          width: "50px",
+                          height: "50px",
+                          objectFit: "cover",
+                          borderRadius: "6px",
+                          border: "1px solid #ddd",
+                        }}
+                      />
+                    ) : (
+                      <span className="text-muted">Sin imagen</span>
+                    )}
+                  </td>
                   <td>{p.name}</td>
                   <td>{p.category}</td>
                   <td>${p.price}</td>

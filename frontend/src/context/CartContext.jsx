@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext();
 
-// Hook para usar el carrito en cualquier componente
+// Hook para usar el carrito
 export function useCart() {
   return useContext(CartContext);
 }
@@ -19,18 +19,25 @@ export function CartProvider({ children }) {
     }
   });
 
-  // Guardar en localStorage cada vez que cambia
+  // Persistir carrito
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  // Agregar producto al carrito
+  /* ===========================
+     AGREGAR PRODUCTO
+  =========================== */
   function addToCart(product) {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
 
+      // Si ya está en el carrito
       if (existing) {
-        // si ya existe, solo aumento cantidad
+        if (existing.quantity >= product.stock) {
+          alert("No hay más stock disponible");
+          return prev;
+        }
+
         return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -38,28 +45,45 @@ export function CartProvider({ children }) {
         );
       }
 
-      // si no existe, lo agrego con quantity = 1
+      // Si no hay stock
+      if (product.stock <= 0) {
+        alert("Producto sin stock");
+        return prev;
+      }
+
+      // Nuevo producto
       return [...prev, { ...product, quantity: 1 }];
     });
   }
 
-  // Quitar un producto completamente
+  /* ===========================
+     QUITAR PRODUCTO
+  =========================== */
   function removeFromCart(id) {
     setCart((prev) => prev.filter((item) => item.id !== id));
   }
 
-  // Aumentar cantidad
+  /* ===========================
+     AUMENTAR CANTIDAD
+  =========================== */
   function increaseQuantity(id) {
     setCart((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
+      prev.map((item) => {
+        if (item.id !== id) return item;
+
+        if (item.quantity >= item.stock) {
+          alert("No hay más stock disponible");
+          return item;
+        }
+
+        return { ...item, quantity: item.quantity + 1 };
+      })
     );
   }
 
-  // Disminuir cantidad
+  /* ===========================
+     DISMINUIR CANTIDAD
+  =========================== */
   function decreaseQuantity(id) {
     setCart((prev) =>
       prev
@@ -72,15 +96,18 @@ export function CartProvider({ children }) {
     );
   }
 
-  // Vaciar carrito
+  /* ===========================
+     VACIAR CARRITO
+  =========================== */
   function clearCart() {
     setCart([]);
   }
 
-  // Total de items
+  /* ===========================
+     TOTALES
+  =========================== */
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Total en $
   const totalPrice = cart.reduce(
     (acc, item) => acc + item.quantity * item.price,
     0

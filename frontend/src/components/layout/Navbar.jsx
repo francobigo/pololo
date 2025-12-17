@@ -2,11 +2,20 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+
 
 function Navbar() {
   const { totalItems } = useCart();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  // 🚀 NUEVA FUNCIÓN PARA SALIR Y REDIRIGIR
+  const handleLogout = () => {
+    logout(); // Llama al logout del contexto (limpia estado y localStorage)
+   
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -94,25 +103,39 @@ function Navbar() {
           />
         </form>
 
-        {/* CARRITO + ADMIN */}
-        <div className="d-flex align-items-center gap-3">
+          {/* CARRITO + ADMIN */}
+      <div className="d-flex align-items-center gap-3">
 
-          <Link to="/carrito" className="btn btn-outline-primary position-relative">
-            🛒 Carrito
-            {totalItems > 0 && (
-              <span
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-              >
-                {totalItems}
-              </span>
-            )}
-          </Link>
+        <Link to="/carrito" className="btn btn-outline-primary position-relative">
+          🛒 Carrito
+          {totalItems > 0 && (
+            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {totalItems}
+            </span>
+          )}
+        </Link>
 
-          <Link to="/admin/login" className="nav-link text-secondary">
+        {!user && (
+          <Link to="/admin/login" className="btn btn-outline-secondary">
             Admin
           </Link>
+        )}
 
-        </div>
+        {user && (
+          <>
+            <Link to="/admin/productos" className="btn btn-outline-dark">
+              Panel
+            </Link>
+
+            <button
+              className="btn btn-outline-danger"
+              onClick={handleLogout}
+            >
+              Salir
+            </button>
+          </>
+        )}
+      </div>
       </div>
     </nav>
   );

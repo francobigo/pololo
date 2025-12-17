@@ -23,6 +23,7 @@ import { RequireAuth } from "./components/RequireAuth";
 import AdminProductos from "./pages/admin/AdminProductos";
 import AdminNuevoProducto from "./pages/admin/AdminNuevoProducto";
 import AdminEditarProducto from "./pages/admin/AdminEditarProducto";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 
 function App() {
@@ -47,10 +48,13 @@ function App() {
                   <Route path="/nosotros" element={<Nosotros />} />
                   <Route path="/producto/:id" element={<DetalleProducto />} />
                   <Route path="/carrito" element={<Carrito />} />
-                  <Route path="/admin/productos" element={<AdminProductos />} />
-                  <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
-                  <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />
-
+                  <Route path="/admin/login" element={<LoginAdmin />} />
+                  {/* 🔒 RUTAS PROTEGIDAS */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/admin/productos" element={<AdminProductos />} />
+                    <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
+                    <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />
+                  </Route>
                 </Routes>
               </main>
               <Footer />

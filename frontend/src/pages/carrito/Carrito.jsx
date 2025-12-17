@@ -1,8 +1,6 @@
-// src/pages/carrito/Carrito.jsx
 import { useCart } from "../../context/CartContext";
 import { Link } from "react-router-dom";
-import { getImageUrl } from "../../utils/imageUrl"; // 👈 IMPORTANTE
-
+import { getImageUrl } from "../../utils/imageUrl";
 
 function Carrito() {
   const {
@@ -14,8 +12,8 @@ function Carrito() {
     clearCart,
   } = useCart();
 
-  // 👉 PONÉ ACÁ EL NÚMERO DE WHATSAPP DEL NEGOCIO
-  // Formato: sin + ni 0 ni 15, todo junto (ej: 5492611234567)
+  // 👉 NÚMERO DE WHATSAPP DEL NEGOCIO
+  // Formato: 549 + código de área + número
   const WHATSAPP_NUMBER = "5493516178552";
 
   const handleSendWhatsApp = () => {
@@ -24,14 +22,12 @@ function Carrito() {
     let message = "Hola! Quiero hacer el siguiente pedido:%0A%0A";
 
     cart.forEach((item) => {
-      const line = `- ${item.quantity}x ${item.name} ($${item.price})`;
-      message += line + "%0A";
+      message += `- ${item.quantity}x ${item.name} ($${item.price})%0A`;
     });
 
     message += `%0ATotal: $${totalPrice}`;
 
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-
     window.open(url, "_blank");
   };
 
@@ -48,14 +44,13 @@ function Carrito() {
 
   return (
     <div className="container mt-4">
-
       <h2 className="mb-4">Tu carrito</h2>
 
       {/* LISTA DE PRODUCTOS */}
       {cart.map((item) => (
         <div key={item.id} className="card mb-3">
           <div className="row g-0">
-
+            
             {/* IMAGEN */}
             <div className="col-md-3">
               <img
@@ -68,12 +63,11 @@ function Carrito() {
             {/* DETALLES */}
             <div className="col-md-9">
               <div className="card-body">
-
                 <h5 className="card-title">{item.name}</h5>
                 <p className="card-text text-muted">{item.category}</p>
                 <p className="fw-bold">${item.price}</p>
 
-                {/* BOTONES DE CANTIDAD */}
+                {/* CONTROLES DE CANTIDAD */}
                 <div className="d-flex align-items-center gap-3 mt-2">
                   <button
                     className="btn btn-outline-secondary"
@@ -86,11 +80,19 @@ function Carrito() {
 
                   <button
                     className="btn btn-outline-secondary"
+                    disabled={item.quantity >= item.stock}
                     onClick={() => increaseQuantity(item.id)}
                   >
                     +
                   </button>
                 </div>
+
+                {/* MENSAJE DE STOCK */}
+                {item.quantity >= item.stock && (
+                  <small className="text-danger d-block mt-1">
+                    Stock máximo alcanzado
+                  </small>
+                )}
 
                 {/* BOTÓN ELIMINAR */}
                 <button
@@ -108,21 +110,18 @@ function Carrito() {
 
       {/* TOTAL Y ACCIONES */}
       <div className="mt-4">
-        <h4>Total: <strong>${totalPrice}</strong></h4>
+        <h4>
+          Total: <strong>${totalPrice}</strong>
+        </h4>
 
         <button className="btn btn-outline-danger me-3" onClick={clearCart}>
           Vaciar carrito
         </button>
 
-        {/* 👉 BOTÓN PARA ENVIAR PEDIDO POR WHATSAPP */}
-        <button
-          className="btn btn-success"
-          onClick={handleSendWhatsApp}
-        >
+        <button className="btn btn-success" onClick={handleSendWhatsApp}>
           Enviar pedido por WhatsApp
         </button>
       </div>
-
     </div>
   );
 }
