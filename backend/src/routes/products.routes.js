@@ -6,6 +6,8 @@ import { getProducts,
     deleteProduct
 } from "../controllers/products.controller.js";
 import { upload } from '../config/upload.js';
+import { authAdmin } from "../middlewares/authAdmin.js"; // Protege rutas
+import { verifyToken } from "../middlewares/auth.middleware.js";
 
 
 const router = Router();
@@ -21,9 +23,9 @@ router.get('/', getProducts);
 router.get('/:id', getProductById);
 
 // admin (CRUD) con subida de imagen
-router.post('/', upload.single('image'), createProduct);
-router.put('/:id', upload.single('image'), updateProduct);
-router.delete('/:id', deleteProduct);
+router.post('/', verifyToken, upload.single('image'), createProduct);
+router.put('/:id', verifyToken, upload.single('image'), updateProduct);
+router.delete('/:id', verifyToken, deleteProduct);
 
 
 export default router;

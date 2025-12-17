@@ -1,6 +1,19 @@
-// src/services/productsService.js
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
+/* ===========================
+   Helper: headers con JWT
+=========================== */
+function authHeaders() {
+  const token = localStorage.getItem("authToken");
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+/* ===========================
+   CATÁLOGO (PÚBLICO)
+=========================== */
 export async function getProducts(category) {
   let url = `${API_URL}/products`;
 
@@ -17,10 +30,15 @@ export async function getProducts(category) {
   return await res.json();
 }
 
+/* ===========================
+   ADMIN (TODOS LOS PRODUCTOS)
+=========================== */
 export async function getAllProductsAdmin() {
   const url = `${API_URL}/products?includeInactive=true`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: authHeaders(),
+  });
 
   if (!res.ok) {
     throw new Error('Error al obtener productos (admin)');
@@ -29,7 +47,9 @@ export async function getAllProductsAdmin() {
   return await res.json();
 }
 
-
+/* ===========================
+   PRODUCTO POR ID
+=========================== */
 export async function getProductById(id) {
   const url = `${API_URL}/products/${id}`;
 
@@ -42,20 +62,25 @@ export async function getProductById(id) {
   return await res.json();
 }
 
+/* ===========================
+   ELIMINAR PRODUCTO (ADMIN)
+=========================== */
 export async function deleteProduct(id) {
   const res = await fetch(`${API_URL}/products/${id}`, {
     method: 'DELETE',
+    headers: authHeaders(),
   });
 
   if (!res.ok) {
     throw new Error('Error al eliminar el producto');
   }
 
-  return await res.json(); // { message: 'Producto eliminado correctamente' }
+  return await res.json();
 }
 
-// 👇👇 CAMBIAN ESTAS DOS
-
+/* ===========================
+   CREAR PRODUCTO (ADMIN)
+=========================== */
 export async function createProduct(productData) {
   const formData = new FormData();
 
@@ -66,14 +91,14 @@ export async function createProduct(productData) {
   formData.append('stock', productData.stock ?? 0);
   formData.append('active', productData.active);
 
-  // archivo de imagen (si lo hay)
   if (productData.imageFile) {
     formData.append('image', productData.imageFile);
   }
 
   const res = await fetch(`${API_URL}/products`, {
     method: 'POST',
-    body: formData, // ⚠️ sin headers, el navegador pone Content-Type
+    headers: authHeaders(),
+    body: formData,
   });
 
   if (!res.ok) {
@@ -83,6 +108,9 @@ export async function createProduct(productData) {
   return await res.json();
 }
 
+/* ===========================
+   ACTUALIZAR PRODUCTO (ADMIN)
+=========================== */
 export async function updateProduct(id, productData) {
   const formData = new FormData();
 
@@ -99,6 +127,7 @@ export async function updateProduct(id, productData) {
 
   const res = await fetch(`${API_URL}/products/${id}`, {
     method: 'PUT',
+    headers: authHeaders(),
     body: formData,
   });
 
