@@ -6,18 +6,30 @@ import { testDBConnection } from "./config/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Rutas específicas
+import homeRoutes from "./routes/home.routes.js";
+import adminHomeRoutes from "./routes/adminHome.routes.js";
+
+// __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Middlewares globales
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Servir imágenes
+
+// Rutas
+app.use("/api/home", homeRoutes);
+app.use("/api/admin/home", adminHomeRoutes);
+
+// Servir imágenes estáticas
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// 👉 TODA la API pasa por acá
+// Resto de la API
 app.use("/api", router);
 
 // Root
@@ -34,6 +46,7 @@ app.use((req, res) => {
   res.status(404).json({ message: "Ruta no encontrada" });
 });
 
+// Start server
 const startServer = async () => {
   await testDBConnection();
   app.listen(envs.PORT, () => {

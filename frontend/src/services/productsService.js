@@ -30,6 +30,18 @@ export async function getProducts(category) {
   return await res.json();
 }
 
+export async function searchProducts(query) {
+  const res = await fetch(
+    `${API_URL}/products/search?q=${encodeURIComponent(query)}`
+  );
+
+  if (!res.ok) {
+    throw new Error("Error al buscar productos");
+  }
+
+  return await res.json();
+}
+
 /* ===========================
    ADMIN (TODOS LOS PRODUCTOS)
 =========================== */
@@ -42,6 +54,18 @@ export async function getAllProductsAdmin() {
 
   if (!res.ok) {
     throw new Error('Error al obtener productos (admin)');
+  }
+
+  return await res.json();
+}
+
+export async function searchProductsAdmin(query) {
+  const url = `${API_URL}/products/search?q=${encodeURIComponent(query)}`;
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error("Error buscando productos");
   }
 
   return await res.json();

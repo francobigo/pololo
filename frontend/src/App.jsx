@@ -25,6 +25,9 @@ import AdminNuevoProducto from "./pages/admin/AdminNuevoProducto";
 import AdminEditarProducto from "./pages/admin/AdminEditarProducto";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import AdminHome from "./pages/admin/AdminHome";
+
+
 
 function App() {
   return (
@@ -51,6 +54,7 @@ function App() {
                   <Route path="/admin/login" element={<LoginAdmin />} />
                   {/* 🔒 RUTAS PROTEGIDAS */}
                   <Route element={<ProtectedRoute />}>
+                    <Route path="/admin/home" element={<AdminHome />} />
                     <Route path="/admin/productos" element={<AdminProductos />} />
                     <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
                     <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />

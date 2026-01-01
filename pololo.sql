@@ -8,3 +8,21 @@ CREATE TABLE products (
   stock INT DEFAULT 0,
   activo BOOLEAN DEFAULT TRUE
 );
+
+CREATE TABLE home_products (
+  id SERIAL PRIMARY KEY,
+  product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  orden INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE (product_id)
+);
+
+CREATE TABLE home_carousel (
+  id SERIAL PRIMARY KEY,
+  imagen_url TEXT NOT NULL,
+  orden INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  titulo VARCHAR(50),
+  activo BOOLEAN NOT NULL DEFAULT TRUE
+);

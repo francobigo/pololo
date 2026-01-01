@@ -1,34 +1,38 @@
 import { Router } from "express";
-import { getProducts, 
-    getProductById,
-    createProduct,
-    updateProduct,
-    deleteProduct
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  searchProducts
 } from "../controllers/products.controller.js";
-import { upload } from '../config/upload.js';
-import { authAdmin } from "../middlewares/authAdmin.js"; // Protege rutas
-import { verifyToken } from "../middlewares/auth.middleware.js";
 
+import { upload } from "../config/upload.js";
+import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// GET /api/products  (mounted as '/products' in index.routes)
-// expose root here
+/* =========================
+   PÚBLICO
+========================= */
+
+// listado (puede filtrar por category)
 router.get("/", getProducts);
 
+// búsqueda por nombre
+router.get("/search", searchProducts);
+
+// detalle
 router.get("/:id", getProductById);
 
-// público (listado / detalle)
-router.get('/', getProducts);
-router.get('/:id', getProductById);
+/* =========================
+   ADMIN
+========================= */
 
-// admin (CRUD) con subida de imagen
-router.post('/', verifyToken, upload.single('image'), createProduct);
-router.put('/:id', verifyToken, upload.single('image'), updateProduct);
-router.delete('/:id', verifyToken, deleteProduct);
-
+router.post("/", verifyToken, upload.single("image"), createProduct);
+router.put("/:id", verifyToken, upload.single("image"), updateProduct);
+router.delete("/:id", verifyToken, deleteProduct);
 
 export default router;
-
-
 export { router as productsRoutes };

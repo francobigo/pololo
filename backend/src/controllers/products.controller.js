@@ -59,6 +59,35 @@ export const getProducts = async (req, res) => {
   }
 };
 
+// buscar un producto por nombre o descripción (GET /api/products/search)
+export const searchProducts = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q) {
+      return res.json([]);
+    }
+
+    const result = await pool.query(
+      `
+      SELECT id, nombre, precio
+      FROM products
+      WHERE LOWER(nombre) LIKE LOWER($1)
+        AND activo = true
+      ORDER BY nombre
+      LIMIT 10
+      `,
+      [`%${q}%`]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error buscando productos:", error);
+    res.status(500).json({ message: "Error buscando productos" });
+  }
+};
+
+
 // OBTENER UN PRODUCTO POR ID (GET /api/products/:id)
 export const getProductById = async (req, res) => {
   const { id } = req.params;
