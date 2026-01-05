@@ -6,8 +6,8 @@ import { getImageUrl } from "../../utils/imageUrl";
 function Catalogo() {
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [searchParams] = useSearchParams();
   const search = searchParams.get("search") || "";
@@ -15,7 +15,7 @@ function Catalogo() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getProducts(); // trae todos
+        const data = await getProducts();
         setProducts(data);
         setFiltered(data);
       } catch (err) {
@@ -32,92 +32,98 @@ function Catalogo() {
       setFiltered(products);
     } else {
       const text = search.toLowerCase();
-
-      const result = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(text) ||
-          p.description.toLowerCase().includes(text)
+      setFiltered(
+        products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(text) ||
+            p.description.toLowerCase().includes(text)
+        )
       );
-
-      setFiltered(result);
     }
   }, [search, products]);
 
+  /* =====================
+     ESTADOS
+  ====================== */
+
   if (loading) {
     return (
-      <div className="container mt-4">
-        <p>Cargando productos...</p>
+      <div className="container py-5 text-center">
+        <div className="spinner-border" />
+        <p className="mt-3">Cargando productos...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mt-4">
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  if (filtered.length === 0) {
-    return (
-      <div className="container mt-4">
-        <h1 className="mb-3">Catálogo</h1>
-
-        {search && (
-          <p className="text-muted">
-            Resultados para: <strong>{search}</strong>
-          </p>
-        )}
-
-        <p>No se encontraron productos.</p>
+      <div className="container py-5 text-center">
+        <p className="text-danger">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="container mt-4">
-      <h1 className="mb-3">Catálogo</h1>
+    <div className="container py-4">
+      <div className="mb-4">
+        <h1 className="fw-bold">Catálogo</h1>
 
-      {search && (
-        <p className="text-muted">
-          Resultados para: <strong>{search}</strong>
-        </p>
-      )}
-
-      <div className="row">
-        {filtered.map((p) => (
-          <div key={p.id} className="col-md-4 mb-4">
-            <Link
-              to={`/producto/${p.id}`}
-              className="text-decoration-none text-dark"
-            >
-              <div className="card h-100">
-
-                {p.image && (
-                  <img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
-                    className="card-img-top"
-                  />
-                )}
-
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title">{p.name}</h5>
-                  <p className="card-text flex-grow-1">
-                    {p.description}
-                  </p>
-                  <p className="fw-bold mb-1">${p.price}</p>
-                  <small className="text-muted">
-                    Categoría: {p.category}
-                  </small>
-                </div>
-
-              </div>
-            </Link>
-          </div>
-        ))}
+        {search && (
+          <p className="text-muted mb-0">
+            Resultados para: <strong>{search}</strong>
+          </p>
+        )}
       </div>
+
+      {filtered.length === 0 ? (
+        <p>No se encontraron productos.</p>
+      ) : (
+        <div className="row g-4">
+          {filtered.map((p) => (
+            <div
+              key={p.id}
+              className="col-12 col-sm-6 col-md-4 col-lg-3"
+            >
+              <Link
+                to={`/producto/${p.id}`}
+                className="text-decoration-none text-dark"
+              >
+                <div className="card h-100 border-0 shadow-sm product-card">
+
+                  {/* IMAGEN */}
+                  <div className="ratio ratio-1x1">
+                    <img
+                      src={getImageUrl(p.image)}
+                      alt={p.name}
+                      className="card-img-top object-fit-cover"
+                    />
+                  </div>
+
+                  {/* BODY */}
+                  <div className="card-body d-flex flex-column">
+                    <h6 className="fw-semibold mb-1">{p.name}</h6>
+
+                    <p className="fw-bold fs-5 mb-1">
+                      ${p.price}
+                    </p>
+
+                    <small className="text-muted mb-3">
+                      {p.category}
+                    </small>
+
+                    <div className="mt-auto">
+                      <button className="btn btn-dark w-100">
+                        Ver producto
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

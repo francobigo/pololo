@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 /* ===========================
    Helper: headers con JWT
@@ -9,6 +9,19 @@ function authHeaders() {
   return {
     Authorization: `Bearer ${token}`,
   };
+}
+
+/* ===========================
+   Helper: manejo global auth
+=========================== */
+function handleAuthError(res) {
+  if (res.status === 401 || res.status === 403) {
+    // token vencido o inválido
+    localStorage.removeItem("authToken");
+    window.location.href = "/catalogo"; // fuerza salida limpia
+    return true;
+  }
+  return false;
 }
 
 /* ===========================
@@ -24,7 +37,7 @@ export async function getProducts(category) {
   const res = await fetch(url);
 
   if (!res.ok) {
-    throw new Error('Error al obtener productos');
+    throw new Error("Error al obtener productos");
   }
 
   return await res.json();
@@ -34,14 +47,14 @@ export async function getProducts(category) {
    ADMIN (TODOS LOS PRODUCTOS)
 =========================== */
 export async function getAllProductsAdmin() {
-  const url = `${API_URL}/products?includeInactive=true`;
-
-  const res = await fetch(url, {
+  const res = await fetch(`${API_URL}/products?includeInactive=true`, {
     headers: authHeaders(),
   });
 
+  if (handleAuthError(res)) return;
+
   if (!res.ok) {
-    throw new Error('Error al obtener productos (admin)');
+    throw new Error("Error al obtener productos (admin)");
   }
 
   return await res.json();
@@ -51,12 +64,10 @@ export async function getAllProductsAdmin() {
    PRODUCTO POR ID
 =========================== */
 export async function getProductById(id) {
-  const url = `${API_URL}/products/${id}`;
-
-  const res = await fetch(url);
+  const res = await fetch(`${API_URL}/products/${id}`);
 
   if (!res.ok) {
-    throw new Error('Error al obtener el producto');
+    throw new Error("Error al obtener el producto");
   }
 
   return await res.json();
@@ -67,12 +78,14 @@ export async function getProductById(id) {
 =========================== */
 export async function deleteProduct(id) {
   const res = await fetch(`${API_URL}/products/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: authHeaders(),
   });
 
+  if (handleAuthError(res)) return;
+
   if (!res.ok) {
-    throw new Error('Error al eliminar el producto');
+    throw new Error("Error al eliminar el producto");
   }
 
   return await res.json();
@@ -84,25 +97,27 @@ export async function deleteProduct(id) {
 export async function createProduct(productData) {
   const formData = new FormData();
 
-  formData.append('name', productData.name);
-  formData.append('category', productData.category);
-  formData.append('description', productData.description || '');
-  formData.append('price', productData.price);
-  formData.append('stock', productData.stock ?? 0);
-  formData.append('active', productData.active);
+  formData.append("name", productData.name);
+  formData.append("category", productData.category);
+  formData.append("description", productData.description || "");
+  formData.append("price", productData.price);
+  formData.append("stock", productData.stock ?? 0);
+  formData.append("active", productData.active);
 
   if (productData.imageFile) {
-    formData.append('image', productData.imageFile);
+    formData.append("image", productData.imageFile);
   }
 
   const res = await fetch(`${API_URL}/products`, {
-    method: 'POST',
+    method: "POST",
     headers: authHeaders(),
     body: formData,
   });
 
+  if (handleAuthError(res)) return;
+
   if (!res.ok) {
-    throw new Error('Error al crear el producto');
+    throw new Error("Error al crear el producto");
   }
 
   return await res.json();
@@ -114,25 +129,27 @@ export async function createProduct(productData) {
 export async function updateProduct(id, productData) {
   const formData = new FormData();
 
-  formData.append('name', productData.name);
-  formData.append('category', productData.category);
-  formData.append('description', productData.description || '');
-  formData.append('price', productData.price);
-  formData.append('stock', productData.stock ?? 0);
-  formData.append('active', productData.active);
+  formData.append("name", productData.name);
+  formData.append("category", productData.category);
+  formData.append("description", productData.description || "");
+  formData.append("price", productData.price);
+  formData.append("stock", productData.stock ?? 0);
+  formData.append("active", productData.active);
 
   if (productData.imageFile) {
-    formData.append('image', productData.imageFile);
+    formData.append("image", productData.imageFile);
   }
 
   const res = await fetch(`${API_URL}/products/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     headers: authHeaders(),
     body: formData,
   });
 
+  if (handleAuthError(res)) return;
+
   if (!res.ok) {
-    throw new Error('Error al actualizar el producto');
+    throw new Error("Error al actualizar el producto");
   }
 
   return await res.json();

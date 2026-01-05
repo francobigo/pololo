@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
 
@@ -6,7 +6,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem("authUser");
-      // MODIFICACIÓN: Agregamos check para el string "null" por seguridad
       if (!saved || saved === "undefined" || saved === "null") return null;
       return JSON.parse(saved);
     } catch {
@@ -16,20 +15,14 @@ export function AuthProvider({ children }) {
 
   const [token, setToken] = useState(() => {
     const saved = localStorage.getItem("authToken");
-    // MODIFICACIÓN: Agregamos check para el string "null"
     return saved && saved !== "undefined" && saved !== "null" ? saved : null;
   });
 
   const login = (token, user) => {
-    // MODIFICACIÓN: Si 'user' llega como undefined desde el componente, 
-    // guardamos un objeto genérico para que el Navbar funcione.
-    const userToSave = user || { loggedIn: true, role: 'admin' };
-
     localStorage.setItem("authToken", token);
-    localStorage.setItem("authUser", JSON.stringify(userToSave));
-    
+    localStorage.setItem("authUser", JSON.stringify(user));
     setToken(token);
-    setUser(userToSave);
+    setUser(user);
   };
 
   const logout = () => {
@@ -38,6 +31,13 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
   };
+
+  // 🔥 si el token desaparece → cerrar sesión
+  useEffect(() => {
+    if (!token) {
+      setUser(null);
+    }
+  }, [token]);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
