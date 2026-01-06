@@ -10,46 +10,44 @@ export const getProducts = async (req, res) => {
   try {
     let query = `
       SELECT 
-        id,
-        nombre      AS name,
-        categoria   AS category,
-        descripcion AS description,
-        precio      AS price,
-        imagen_url  AS image,
-        stock,
-        activo      AS active
-      FROM products
+        p.id,
+        p.nombre      AS name,
+        p.categoria   AS category,
+        p.descripcion AS description,
+        p.precio      AS price,
+        p.imagen_url  AS image,
+        p.stock,
+        p.activo      AS active,
+        st.nombre     AS size_type
+      FROM products p
+      LEFT JOIN size_types st ON st.id = p.size_type_id
     `;
 
     const params = [];
     const conditions = [];
 
-    // 🔹 Si NO pide incluir inactivos, solo devolvemos activos
     if (includeInactive !== 'true') {
-      conditions.push('activo = true');
+      conditions.push('p.activo = true');
     }
 
     if (category) {
-      conditions.push(
-        'LOWER(categoria) = LOWER($' + (params.length + 1) + ')'
-      );
+      conditions.push(`LOWER(p.categoria) = LOWER($${params.length + 1})`);
       params.push(category);
     }
 
     if (search) {
-  conditions.push(
-    `(LOWER(nombre) LIKE LOWER($${params.length + 1})
-      OR LOWER(descripcion) LIKE LOWER($${params.length + 1}))`
-  );
-  params.push(`%${search}%`);
-}
-
+      conditions.push(`
+        (LOWER(p.nombre) LIKE LOWER($${params.length + 1})
+        OR LOWER(p.descripcion) LIKE LOWER($${params.length + 1}))
+      `);
+      params.push(`%${search}%`);
+    }
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY id';
+    query += ' ORDER BY p.id';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -58,6 +56,7 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener productos' });
   }
 };
+
 
 // buscar un producto por nombre o descripción (GET /api/products/search)
 export const searchProducts = async (req, res) => {
@@ -93,33 +92,65 @@ export const getProductById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(
+    const productResult = await pool.query(
       `
       SELECT
-        id,
-        nombre      AS name,
-        categoria   AS category,
-        descripcion AS description,
-        precio      AS price,
-        imagen_url  AS image,
-        stock,
-        activo      AS active
-      FROM products
-      WHERE id = $1
+        p.id,
+        p.nombre      AS name,
+        p.categoria   AS category,
+        p.descripcion AS description,
+        p.precio      AS price,
+        p.imagen_url  AS image,
+        p.activo      AS active,
+        st.nombre     AS size_type
+      FROM products p
+      LEFT JOIN size_types st ON st.id = p.size_type_id
+      WHERE p.id = $1
       `,
       [id]
     );
 
-    if (result.rows.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    res.json(result.rows[0]);
+    const product = productResult.rows[0];
+
+    let sizes = [];
+
+    if (product.size_type) {
+      const sizesResult = await pool.query(
+        `
+        SELECT
+          s.valor AS size,
+          ps.stock
+        FROM product_sizes ps
+        JOIN sizes s ON s.id = ps.size_id
+        WHERE ps.product_id = $1
+        ORDER BY s.id
+        `,
+        [id]
+      );
+
+      sizes = sizesResult.rows;
+    }
+
+    res.json({
+      ...product,
+      sizes: product.size_type
+        ? {
+            type: product.size_type,
+            items: sizes
+          }
+        : null
+    });
+
   } catch (error) {
-    console.error('Error al obtener producto por ID:', error);
+    console.error('Error al obtener producto:', error);
     res.status(500).json({ message: 'Error al obtener producto' });
   }
 };
+
 
 
 // CREAR PRODUCTO  (POST /api/products)
@@ -163,7 +194,7 @@ export const createProduct = async (req, res) => {
 
     const result = await pool.query(
       `
-      INSERT INTO products (nombre, categoria, descripcion, precio, imagen_url, stock, activo)
+      INSERT INTO products (nombre, categoria, descripcion, precio, imagen_url, stock, activo, size_type_id)
       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, true))
       RETURNING 
         id,
