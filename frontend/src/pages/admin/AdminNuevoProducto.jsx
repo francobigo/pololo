@@ -1,7 +1,8 @@
 // src/pages/admin/AdminNuevoProducto.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { createProduct } from "../../services/productsService";
+import { apiClient } from "../../services/apiClient";
 
 function AdminNuevoProducto() {
   const navigate = useNavigate();
@@ -11,13 +12,51 @@ function AdminNuevoProducto() {
     category: "marroquineria",
     description: "",
     price: "",
-    stock: 0,
     active: true,
     imageFile: null, // archivo real
   });
 
   const [error, setError] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  
+  // Estados para talles
+  const [availableSizes, setAvailableSizes] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
+
+  // Cargar talles cuando cambia la categoría
+  useEffect(() => {
+    const loadSizes = async () => {
+      const category = form.category;
+      
+      // Marroquinería no tiene talles
+      if (category === 'marroquineria') {
+        setAvailableSizes([]);
+        setSelectedSizes([]);
+        return;
+      }
+
+      // Determinar el tipo de talle según categoría
+      let sizeType = '';
+      if (category === 'remeras' || category === 'buzos') {
+        sizeType = 'ropa';
+      } else if (category === 'pantalones') {
+        sizeType = 'pantalon';
+      }
+
+      if (sizeType) {
+        try {
+          const response = await apiClient.get(`/products/sizes/type/${sizeType}`);
+          setAvailableSizes(response.data);
+          setSelectedSizes([]);
+        } catch (err) {
+          console.error('Error cargando talles:', err);
+          setAvailableSizes([]);
+        }
+      }
+    };
+
+    loadSizes();
+  }, [form.category]);
 
   // 👉 cambios en inputs de texto / número / checkbox
   const handleChange = (e) => {
@@ -30,10 +69,25 @@ function AdminNuevoProducto() {
           ? checked
           : name === "price"
           ? value
-          : name === "stock"
-          ? value
           : value,
     }));
+  };
+
+  // 👉 manejo de talles
+  const handleSizeStockChange = (sizeId, stock) => {
+    setSelectedSizes((prev) => {
+      const existing = prev.find((s) => s.size_id === sizeId);
+      
+      if (existing) {
+        // Actualizar stock
+        return prev.map((s) =>
+          s.size_id === sizeId ? { ...s, stock: parseInt(stock) || 0 } : s
+        );
+      } else {
+        // Agregar nuevo talle
+        return [...prev, { size_id: sizeId, stock: parseInt(stock) || 0 }];
+      }
+    });
   };
 
   // 👉 cambios en input file (imagen)
@@ -104,7 +158,7 @@ function AdminNuevoProducto() {
       await createProduct({
         ...form,
         price: parseFloat(form.price),
-        stock: parseInt(form.stock || 0, 10),
+        sizes: selectedSizes.filter((s) => s.stock > 0), // Solo enviar talles con stock
       });
 
       navigate("/admin/productos");
@@ -212,17 +266,35 @@ function AdminNuevoProducto() {
           </div>
         )}
 
-        <div className="mb-3">
-          <label className="form-label">Stock</label>
-          <input
-            type="number"
-            className="form-control"
-            name="stock"
-            value={form.stock}
-            onChange={handleChange}
-            min="0"
-          />
-        </div>
+        {/* TALLES (solo si no es marroquinería) */}
+        {form.category !== 'marroquineria' && availableSizes.length > 0 && (
+          <div className="mb-3">
+            <label className="form-label">Talles y Stock</label>
+            <div className="border rounded p-3">
+              {availableSizes.map((size) => {
+                const currentStock = selectedSizes.find((s) => s.size_id === size.id)?.stock || 0;
+                
+                return (
+                  <div key={size.id} className="row mb-2 align-items-center">
+                    <div className="col-3">
+                      <strong>{size.size}</strong>
+                    </div>
+                    <div className="col-5">
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        placeholder="Stock"
+                        min="0"
+                        value={currentStock}
+                        onChange={(e) => handleSizeStockChange(size.id, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="form-check mb-3">
           <input

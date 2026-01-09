@@ -5,7 +5,10 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  searchProducts
+  searchProducts,
+  getSizesByType,
+  getProductSizes,
+  updateProductSizes
 } from "../controllers/products.controller.js";
 
 import { upload } from "../config/upload.js";
@@ -23,8 +26,14 @@ router.get("/", getProducts);
 // búsqueda por nombre
 router.get("/search", searchProducts);
 
+// talles por tipo (ANTES de /:id para que no lo confunda)
+router.get("/sizes/type/:type", getSizesByType);
+
 // detalle
 router.get("/:id", getProductById);
+
+// talles de un producto
+router.get("/:id/sizes", getProductSizes);
 
 /* =========================
    ADMIN
@@ -32,6 +41,7 @@ router.get("/:id", getProductById);
 
 router.post("/", verifyToken, upload.single("image"), createProduct);
 router.put("/:id", verifyToken, upload.single("image"), updateProduct);
+router.put("/:id/sizes", verifyToken, updateProductSizes);
 router.delete("/:id", verifyToken, deleteProduct);
 
 export default router;

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { getProductById, updateProduct } from "../../services/productsService";
+import { apiClient } from "../../services/apiClient";
 
 function AdminEditarProducto() {
   const { id } = useParams();
@@ -13,13 +14,16 @@ function AdminEditarProducto() {
     description: "",
     price: "",
     image: "",      // URL actual (si viene de la BD)
-    stock: 0,
     active: true,
     imageFile: null // archivo nuevo (opcional)
   });
 
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  
+  // Estados para talles
+  const [availableSizes, setAvailableSizes] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -31,10 +35,19 @@ function AdminEditarProducto() {
           description: data.description || "",
           price: data.price ?? "",
           image: data.image || "",
-          stock: data.stock ?? 0,
           active: data.active ?? true,
           imageFile: null,
         });
+
+        // Cargar talles actuales del producto
+        if (data.sizes && data.sizes.items) {
+          // Convertir formato de respuesta a formato del formulario
+          const sizesData = data.sizes.items.map((item) => ({
+            size_id: item.id || item.size_id,
+            stock: item.stock || 0
+          }));
+          setSelectedSizes(sizesData);
+        }
       } catch (err) {
         console.error(err);
         setError("No se pudo cargar el producto");
@@ -43,6 +56,39 @@ function AdminEditarProducto() {
       }
     })();
   }, [id]);
+
+  // Cargar talles disponibles cuando cambia la categoría
+  useEffect(() => {
+    const loadSizes = async () => {
+      const category = form.category;
+      
+      if (category === 'marroquineria') {
+        setAvailableSizes([]);
+        return;
+      }
+
+      let sizeType = '';
+      if (category === 'remeras' || category === 'buzos') {
+        sizeType = 'ropa';
+      } else if (category === 'pantalones') {
+        sizeType = 'pantalon';
+      }
+
+      if (sizeType) {
+        try {
+          const response = await apiClient.get(`/products/sizes/type/${sizeType}`);
+          setAvailableSizes(response.data);
+        } catch (err) {
+          console.error('Error cargando talles:', err);
+          setAvailableSizes([]);
+        }
+      }
+    };
+
+    if (form.category) {
+      loadSizes();
+    }
+  }, [form.category]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,10 +100,23 @@ function AdminEditarProducto() {
           ? checked
           : name === "price"
           ? value
-          : name === "stock"
-          ? value
           : value,
     }));
+  };
+
+  // 👉 manejo de talles
+  const handleSizeStockChange = (sizeId, stock) => {
+    setSelectedSizes((prev) => {
+      const existing = prev.find((s) => s.size_id === sizeId);
+      
+      if (existing) {
+        return prev.map((s) =>
+          s.size_id === sizeId ? { ...s, stock: parseInt(stock) || 0 } : s
+        );
+      } else {
+        return [...prev, { size_id: sizeId, stock: parseInt(stock) || 0 }];
+      }
+    });
   };
 
   // 👉 archivo de imagen nuevo
@@ -77,7 +136,7 @@ function AdminEditarProducto() {
       await updateProduct(id, {
         ...form,
         price: parseFloat(form.price),
-        stock: parseInt(form.stock || 0, 10),
+        sizes: selectedSizes.filter((s) => s.stock > 0),
       });
 
       navigate("/admin/productos");
@@ -192,17 +251,35 @@ function AdminEditarProducto() {
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Stock</label>
-          <input
-            type="number"
-            className="form-control"
-            name="stock"
-            value={form.stock}
-            onChange={handleChange}
-            min="0"
-          />
-        </div>
+        {/* TALLES (solo si no es marroquinería) */}
+        {form.category !== 'marroquineria' && availableSizes.length > 0 && (
+          <div className="mb-3">
+            <label className="form-label">Talles y Stock</label>
+            <div className="border rounded p-3">
+              {availableSizes.map((size) => {
+                const currentStock = selectedSizes.find((s) => s.size_id === size.id)?.stock || 0;
+                
+                return (
+                  <div key={size.id} className="row mb-2 align-items-center">
+                    <div className="col-3">
+                      <strong>{size.size}</strong>
+                    </div>
+                    <div className="col-5">
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        placeholder="Stock"
+                        min="0"
+                        value={currentStock}
+                        onChange={(e) => handleSizeStockChange(size.id, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="form-check mb-3">
           <input
