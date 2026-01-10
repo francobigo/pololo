@@ -267,34 +267,49 @@ function AdminNuevoProducto() {
         )}
 
         {/* TALLES (solo si no es marroquinería) */}
-        {form.category !== 'marroquineria' && availableSizes.length > 0 && (
-          <div className="mb-3">
-            <label className="form-label">Talles y Stock</label>
-            <div className="border rounded p-3">
-              {availableSizes.map((size) => {
-                const currentStock = selectedSizes.find((s) => s.size_id === size.id)?.stock || 0;
-                
-                return (
-                  <div key={size.id} className="row mb-2 align-items-center">
-                    <div className="col-3">
-                      <strong>{size.size}</strong>
-                    </div>
-                    <div className="col-5">
-                      <input
-                        type="number"
-                        className="form-control form-control-sm"
-                        placeholder="Stock"
-                        min="0"
-                        value={currentStock}
-                        onChange={(e) => handleSizeStockChange(size.id, e.target.value)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+{form.category !== 'marroquineria' && availableSizes.length > 0 && (
+  <div className="mb-3">
+    <label className="form-label">Talles y Stock</label>
+    <div className="border rounded p-3">
+      {[...availableSizes]
+        .sort((a, b) => {
+          // 🟦 Pantalones → orden numérico
+          if (form.category === 'pantalones') {
+            return Number(a.size) - Number(b.size);
+          }
+
+          // 🟩 Remeras / Buzos → orden correcto de ropa
+          const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
+          return ORDER_ROPA.indexOf(a.size) - ORDER_ROPA.indexOf(b.size);
+        })
+        .map((size) => {
+          const currentStock =
+            selectedSizes.find((s) => s.size_id === size.id)?.stock || 0;
+
+          return (
+            <div key={size.id} className="row mb-2 align-items-center">
+              <div className="col-3">
+                <strong>{size.size}</strong>
+              </div>
+              <div className="col-5">
+                <input
+                  type="number"
+                  className="form-control form-control-sm"
+                  placeholder="Stock"
+                  min="0"
+                  value={currentStock}
+                  onChange={(e) =>
+                    handleSizeStockChange(size.id, e.target.value)
+                  }
+                />
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
+    </div>
+  </div>
+)}
+
 
         <div className="form-check mb-3">
           <input

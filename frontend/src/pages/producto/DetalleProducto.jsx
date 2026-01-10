@@ -103,33 +103,48 @@ function DetalleProducto() {
           <p className="mt-3">{product.description}</p>
 
           {/* TALLES */}
-          {product.sizes && product.sizes.items && product.sizes.items.length > 0 && (
-            <div className="mt-4">
-              <h5>Talles disponibles:</h5>
-              <div className="d-flex flex-wrap gap-2 mt-2">
-                {product.sizes.items.map((sizeItem) => (
-                  <button
-                    key={sizeItem.size}
-                    className={`btn ${
-                      selectedSize?.size === sizeItem.size
-                        ? "btn-primary"
-                        : "btn-outline-primary"
-                    } ${sizeItem.stock === 0 ? "disabled" : ""}`}
-                    onClick={() => setSelectedSize(sizeItem)}
-                    disabled={sizeItem.stock === 0}
-                  >
-                    {sizeItem.size}
-                    {sizeItem.stock === 0 && <small className="d-block">(Sin stock)</small>}
-                  </button>
-                ))}
-              </div>
-              {selectedSize && (
-                <p className="mt-2 text-muted">
-                  Stock disponible: <strong>{selectedSize.stock}</strong> unidades
-                </p>
-              )}
-            </div>
-          )}
+{product.sizes && product.sizes.items && product.sizes.items.length > 0 && (
+  <div className="mt-4">
+    <h5>Talles disponibles:</h5>
+    <div className="d-flex flex-wrap gap-2 mt-2">
+      {[...product.sizes.items]
+        .sort((a, b) => {
+          // 🟦 Pantalones → numérico
+          if (product.category === 'pantalones') {
+            return Number(a.size) - Number(b.size);
+          }
+
+          // 🟩 Remeras / Buzos → orden de ropa
+          const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
+          return ORDER_ROPA.indexOf(a.size) - ORDER_ROPA.indexOf(b.size);
+        })
+        .map((sizeItem) => (
+          <button
+            key={sizeItem.size}
+            className={`btn ${
+              selectedSize?.size === sizeItem.size
+                ? "btn-primary"
+                : "btn-outline-primary"
+            } ${sizeItem.stock === 0 ? "disabled" : ""}`}
+            onClick={() => setSelectedSize(sizeItem)}
+            disabled={sizeItem.stock === 0}
+          >
+            {sizeItem.size}
+            {sizeItem.stock === 0 && (
+              <small className="d-block">(Sin stock)</small>
+            )}
+          </button>
+        ))}
+    </div>
+
+    {selectedSize && (
+      <p className="mt-2 text-muted">
+        Stock disponible: <strong>{selectedSize.stock}</strong> unidades
+      </p>
+    )}
+  </div>
+)}
+
 
           {/* CANTIDAD */}
           {(!product.sizes || product.sizes.items.length === 0) && (
