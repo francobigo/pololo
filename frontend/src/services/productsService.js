@@ -14,21 +14,27 @@ function authHeaders() {
 /* ===========================
    CATÁLOGO (PÚBLICO)
 =========================== */
-export async function getProducts(category) {
-  let url = `${API_URL}/products`;
+export async function getProducts(filters = {}) {
+  const params = new URLSearchParams();
 
-  if (category) {
-    url += `?category=${encodeURIComponent(category)}`;
-  }
+  if (filters.category) params.append("category", filters.category);
+  if (filters.size) params.append("size", filters.size);
+  if (filters.search) params.append("search", filters.search);
+
+  const url =
+    params.toString().length > 0
+      ? `${API_URL}/products?${params.toString()}`
+      : `${API_URL}/products`;
 
   const res = await fetch(url);
 
   if (!res.ok) {
-    throw new Error('Error al obtener productos');
+    throw new Error("Error al obtener productos");
   }
 
   return await res.json();
 }
+
 
 export async function searchProducts(query) {
   const res = await fetch(

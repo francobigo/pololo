@@ -5,53 +5,69 @@ import { pool } from '../config/db.js';
 
 // OBTENER PRODUCTOS (GET /api/products)
 export const getProducts = async (req, res) => {
-  const { category, includeInactive, search } = req.query;
+  const { category, includeInactive, search, size } = req.query;
 
-  try {
-    let query = `
-      SELECT 
-        p.id,
-        p.nombre      AS name,
-        p.categoria   AS category,
-        p.descripcion AS description,
-        p.precio      AS price,
-        p.imagen_url  AS image,
-        p.activo      AS active
-      FROM products p
+try {
+  let query = `
+    SELECT DISTINCT
+      p.id,
+      p.nombre      AS name,
+      p.categoria   AS category,
+      p.descripcion AS description,
+      p.precio      AS price,
+      p.imagen_url  AS image,
+      p.activo      AS active
+    FROM products p
+  `;
+
+  const params = [];
+  const conditions = [];
+
+  if (size) {
+    query += `
+      JOIN product_sizes ps ON ps.product_id = p.id
+      JOIN sizes s ON s.id = ps.size_id
     `;
-
-    const params = [];
-    const conditions = [];
-
-    if (includeInactive !== 'true') {
-      conditions.push('p.activo = true');
-    }
-
-    if (category) {
-      conditions.push(`LOWER(p.categoria) = LOWER($${params.length + 1})`);
-      params.push(category);
-    }
-
-    if (search) {
-      conditions.push(`
-        (LOWER(p.nombre) LIKE LOWER($${params.length + 1})
-         OR LOWER(p.descripcion) LIKE LOWER($${params.length + 1}))
-      `);
-      params.push(`%${search}%`);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    query += ' ORDER BY p.id';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error al obtener productos:', error);
-    res.status(500).json({ message: 'Error al obtener productos' });
   }
+
+  if (includeInactive !== 'true') {
+    conditions.push('p.activo = true');
+  }
+
+  if (category) {
+    conditions.push(`LOWER(p.categoria) = LOWER($${params.length + 1})`);
+    params.push(category);
+  }
+
+  if (search) {
+    conditions.push(`
+      (LOWER(p.nombre) LIKE LOWER($${params.length + 1})
+       OR LOWER(p.descripcion) LIKE LOWER($${params.length + 1}))
+    `);
+    params.push(`%${search}%`);
+  }
+
+  if (size) {
+    conditions.push(`
+      s.valor = $${params.length + 1}
+      AND ps.stock > 0
+    `);
+    params.push(size);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY p.id';
+
+  const result = await pool.query(query, params);
+  res.json(result.rows);
+} catch (error) {
+  console.error('Error al obtener productos:', error);
+  res.status(500).json({ message: 'Error al obtener productos' });
+}
+
 };
 
 

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link, useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
+import FiltersBlock from "../../components/filters/FiltersBlock";
+import { FILTERS_BY_PAGE } from "../../components/filters/filters.config";
+
 
 function Catalogo() {
   const [products, setProducts] = useState([]);
@@ -9,23 +12,32 @@ function Catalogo() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
 
-  const [searchParams] = useSearchParams();
-  const search = searchParams.get("search") || "";
+const [searchParams, setSearchParams] = useSearchParams();
+const search = searchParams.get("search") || "";
+const category = searchParams.get("category") || "";
+const size = searchParams.get("size") || "";
+const FILTERS_BY_PAGE = {catalogo: ["category", "size"],};
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getProducts(); // trae todos
-        setProducts(data);
-        setFiltered(data);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudieron cargar los productos");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+useEffect(() => {
+  setLoading(true);
+
+  getProducts({
+    category,
+    size,
+    search
+  })
+    .then(data => {
+      setProducts(data);
+      setFiltered(data);
+      setError(null);
+    })
+    .catch(err => {
+      console.error(err);
+      setError("No se pudieron cargar los productos");
+    })
+    .finally(() => setLoading(false));
+}, [category, size, search]);
+
 
   useEffect(() => {
     if (!search) {
@@ -78,6 +90,23 @@ function Catalogo() {
   return (
     <div className="container mt-4">
       <h1 className="mb-3">Catálogo</h1>
+      
+     <FiltersBlock
+  filters={FILTERS_BY_PAGE.catalogo}
+  values={{ category, size }}
+  onChange={(key, value) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    setSearchParams(params);
+  }}
+/>
+
 
       {search && (
         <p className="text-muted">
@@ -86,7 +115,7 @@ function Catalogo() {
       )}
 
       <div className="row">
-        {filtered.map((p) => (
+        {products.map((p) => (
           <div key={p.id} className="col-md-4 mb-4">
             <Link
               to={`/producto/${p.id}`}
