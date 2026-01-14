@@ -100,4 +100,3 @@ export {
   getCarouselById,
   clearCarouselField
 };
-*** End Patch

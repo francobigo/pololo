@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link, useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
-import FiltersBlock from "../../components/filters/FiltersBlock";
+import FiltersSidebar from "../../components/filters/FiltersSidebar";
+import "./CatalogCards.css";
+import "./CatalogLayout.css";
 
 function Buzos() {
   const [products, setProducts] = useState([]);
@@ -65,44 +67,47 @@ function Buzos() {
     <div className="container mt-4">
       <h1 className="mb-4">Buzos</h1>
 
-      {/* ✅ FILTROS SIEMPRE VISIBLES */}
-      <FiltersBlock filters={["size", "price"]} />
+      <div className="catalog-layout">
+        <FiltersSidebar filters={["size", "price"]} />
 
-      {filtered.length === 0 ? (
-        <p>No hay buzos con esos filtros.</p>
-      ) : (
-        <div className="row">
-          {filtered.map((p) => (
-            <div key={p.id} className="col-md-4 mb-4">
-              <Link
-                to={`/producto/${p.id}`}
-                className="text-decoration-none text-dark"
-              >
-                <div className="card h-100">
-                  {p.image && (
-                    <img
-                      src={getImageUrl(p.image)}
-                      alt={p.name}
-                      className="card-img-top"
-                    />
-                  )}
-
-                  <div className="card-body d-flex flex-column">
-                    <h5 className="card-title">{p.name}</h5>
-                    <p className="card-text flex-grow-1">
-                      {p.description}
-                    </p>
-                    <p className="fw-bold mb-1">${p.price}</p>
-                    <small className="text-muted">
-                      Categoría: {p.category}
-                    </small>
-                  </div>
-                </div>
-              </Link>
+        <div>
+          {filtered.length === 0 ? (
+            <div className="no-products">
+              <p>No hay buzos con esos filtros.</p>
             </div>
-          ))}
+          ) : (
+            <div className="products-grid">
+              {filtered.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/producto/${p.id}`}
+                  className="text-decoration-none"
+                >
+                  <div className="product-card">
+                    {p.image && (
+                      <img
+                        src={getImageUrl(p.image)}
+                        alt={p.name}
+                        className="product-image"
+                      />
+                    )}
+
+                    <div className="product-body">
+                      <h5 className="product-name">{p.name}</h5>
+                      <p className="product-description">{p.description}</p>
+                      
+                      <div className="product-footer">
+                        <span className="product-price">${p.price}</span>
+                        <span className="product-category">{p.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
