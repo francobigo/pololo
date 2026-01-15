@@ -5,7 +5,7 @@ import { pool } from '../config/db.js';
 
 // OBTENER PRODUCTOS (GET /api/products)
 export const getProducts = async (req, res) => {
-  const { category, includeInactive, search, size } = req.query;
+  const { category, includeInactive, search, size, subcategory } = req.query;
 
 try {
   let query = `
@@ -13,6 +13,7 @@ try {
       p.id,
       p.nombre      AS name,
       p.categoria   AS category,
+      p.subcategoria AS subcategory,
       p.descripcion AS description,
       p.precio      AS price,
       p.imagen_url  AS image,
@@ -37,6 +38,11 @@ try {
   if (category) {
     conditions.push(`LOWER(p.categoria) = LOWER($${params.length + 1})`);
     params.push(category);
+  }
+
+  if (subcategory) {
+    conditions.push(`LOWER(p.subcategoria) = LOWER($${params.length + 1})`);
+    params.push(subcategory);
   }
 
   if (search) {
@@ -112,6 +118,7 @@ export const getProductById = async (req, res) => {
         p.id,
         p.nombre      AS name,
         p.categoria   AS category,
+        p.subcategoria AS subcategory,
         p.descripcion AS description,
         p.precio      AS price,
         p.imagen_url  AS image,
@@ -255,7 +262,7 @@ export const createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    let { name, category, description, price, image, active, sizes } = req.body;
+    let { name, category, subcategory, description, price, image, active, sizes } = req.body;
 
     // Si sizes viene como string JSON, parsearlo
     if (typeof sizes === 'string') {
@@ -291,9 +298,16 @@ export const createProduct = async (req, res) => {
     // --- VALIDACIONES DE TALLES SEGÚN CATEGORÍA ---
     if (normalizedCategory === 'marroquineria') {
       if (sizes && sizes.length > 0) {
-        return res
-          .status(400)
-          .json({ message: 'La marroquinería no admite talles' });
+        // Aceptamos solo el talle "Único" asociado a marroquinería
+        for (const s of sizes) {
+          const type = (s.size_type || '').toLowerCase();
+          const value = s.size_value || s.size;
+          if (type !== 'marroquineria' || value !== 'Único') {
+            return res
+              .status(400)
+              .json({ message: 'La marroquinería solo usa talle Único' });
+          }
+        }
       }
     } else if (normalizedCategory === 'remeras' || normalizedCategory === 'buzos') {
       if (sizes && sizes.length > 0) {
@@ -341,23 +355,63 @@ export const createProduct = async (req, res) => {
 
     const productResult = await client.query(
       `
-      INSERT INTO products (nombre, categoria, descripcion, precio, imagen_url, activo)
-      VALUES ($1, $2, $3, $4, $5, COALESCE($6, true))
+      INSERT INTO products (nombre, categoria, subcategoria, descripcion, precio, imagen_url, activo)
+      VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, true))
       RETURNING id
       `,
-      [name, normalizedCategory, description || '', priceNumber, imagePath, active]
+      [name, normalizedCategory, subcategory || null, description || '', priceNumber, imagePath, active]
     );
 
     const productId = productResult.rows[0].id;
 
     if (Array.isArray(sizes) && sizes.length > 0) {
       for (const s of sizes) {
+        let sizeId = s.size_id;
+
+        // Si es marroquinería, buscar el size_id del talle "Único"
+        if (normalizedCategory === 'marroquineria' && (s.size_type || '').toLowerCase() === 'marroquineria') {
+          // Garantizar que exista el size_type "marroquineria"
+          let sizeTypeId;
+          const typeResult = await client.query(
+            `SELECT id FROM size_types WHERE LOWER(nombre) = 'marroquineria'`
+          );
+          if (typeResult.rows.length === 0) {
+            const insertedType = await client.query(
+              `INSERT INTO size_types (nombre) VALUES ('marroquineria') RETURNING id`
+            );
+            sizeTypeId = insertedType.rows[0].id;
+          } else {
+            sizeTypeId = typeResult.rows[0].id;
+          }
+
+          // Garantizar que exista el talle "Único" para marroquinería
+          const sizeResult = await client.query(
+            `SELECT id FROM sizes WHERE size_type_id = $1 AND valor = 'Único'`,
+            [sizeTypeId]
+          );
+          if (sizeResult.rows.length === 0) {
+            const insertedSize = await client.query(
+              `INSERT INTO sizes (size_type_id, valor) VALUES ($1, 'Único') RETURNING id`,
+              [sizeTypeId]
+            );
+            sizeId = insertedSize.rows[0].id;
+          } else {
+            sizeId = sizeResult.rows[0].id;
+          }
+        }
+
+        // Si no se pudo resolver el talle, rechazar para evitar FK nula
+        if (!sizeId) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ message: 'No se encontró el talle Único para marroquinería' });
+        }
+
         await client.query(
           `
           INSERT INTO product_sizes (product_id, size_id, stock)
           VALUES ($1, $2, $3)
           `,
-          [productId, s.size_id, s.stock ?? 0]
+          [productId, sizeId, s.stock ?? 0]
         );
       }
     }
@@ -377,7 +431,7 @@ export const createProduct = async (req, res) => {
 // ACTUALIZAR PRODUCTO (PUT /api/products/:id)
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
-  let { name, category, description, price, image, active, sizes } = req.body;
+  let { name, category, subcategory, description, price, image, active, sizes } = req.body;
 
   // --- VALIDACIONES BÁSICAS ---
   if (!name || !category || price == null) {
@@ -468,15 +522,17 @@ export const updateProduct = async (req, res) => {
       SET
         nombre      = $1,
         categoria   = $2,
-        descripcion = $3,
-        precio      = $4,
-        imagen_url  = $5,
-        activo      = $6
-      WHERE id = $7
+        subcategoria = $3,
+        descripcion = $4,
+        precio      = $5,
+        imagen_url  = $6,
+        activo      = $7
+      WHERE id = $8
       RETURNING 
         id,
         nombre      AS name,
         categoria   AS category,
+        subcategoria AS subcategory,
         descripcion AS description,
         precio      AS price,
         imagen_url  AS image,
@@ -485,6 +541,7 @@ export const updateProduct = async (req, res) => {
       [
         name,
         normalizedCategory,
+        subcategory || null,
         description || '',
         priceNumber,
         imagePath,
@@ -495,6 +552,56 @@ export const updateProduct = async (req, res) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    // Actualizar talles/stock si viene sizes
+    if (Array.isArray(sizes)) {
+      await pool.query('DELETE FROM product_sizes WHERE product_id = $1', [id]);
+
+      for (const s of sizes) {
+        let sizeId = s.size_id;
+
+        // Resolver size_id para marroquinería (talle Único)
+        if (normalizedCategory === 'marroquineria' && (s.size_type || '').toLowerCase() === 'marroquineria') {
+          // Asegurar size_type marroquineria
+          let sizeTypeId;
+          const typeResult = await pool.query(
+            `SELECT id FROM size_types WHERE LOWER(nombre) = 'marroquineria'`
+          );
+          if (typeResult.rows.length === 0) {
+            const insertedType = await pool.query(
+              `INSERT INTO size_types (nombre) VALUES ('marroquineria') RETURNING id`
+            );
+            sizeTypeId = insertedType.rows[0].id;
+          } else {
+            sizeTypeId = typeResult.rows[0].id;
+          }
+
+          const sizeResult = await pool.query(
+            `SELECT id FROM sizes WHERE size_type_id = $1 AND valor = 'Único'`,
+            [sizeTypeId]
+          );
+          if (sizeResult.rows.length === 0) {
+            const insertedSize = await pool.query(
+              `INSERT INTO sizes (size_type_id, valor) VALUES ($1, 'Único') RETURNING id`,
+              [sizeTypeId]
+            );
+            sizeId = insertedSize.rows[0].id;
+          } else {
+            sizeId = sizeResult.rows[0].id;
+          }
+        }
+
+        if (!sizeId) {
+          continue; // si no hay sizeId válido, salteamos
+        }
+
+        await pool.query(
+          `INSERT INTO product_sizes (product_id, size_id, stock)
+           VALUES ($1, $2, $3)`
+          , [id, sizeId, s.stock ?? 0]
+        );
+      }
     }
 
     res.json(result.rows[0]);
@@ -537,12 +644,48 @@ export const updateProductSizes = async (req, res) => {
 
     // Insertar nuevos talles
     for (const s of sizes) {
+      let sizeId = s.size_id;
+
+      // Resolver size Único para marroquinería si viene como size_type/value
+      if ((s.size_type || '').toLowerCase() === 'marroquineria') {
+        let sizeTypeId;
+        const typeResult = await client.query(
+          `SELECT id FROM size_types WHERE LOWER(nombre) = 'marroquineria'`
+        );
+        if (typeResult.rows.length === 0) {
+          const insertedType = await client.query(
+            `INSERT INTO size_types (nombre) VALUES ('marroquineria') RETURNING id`
+          );
+          sizeTypeId = insertedType.rows[0].id;
+        } else {
+          sizeTypeId = typeResult.rows[0].id;
+        }
+
+        const sizeResult = await client.query(
+          `SELECT id FROM sizes WHERE size_type_id = $1 AND valor = 'Único'`,
+          [sizeTypeId]
+        );
+        if (sizeResult.rows.length === 0) {
+          const insertedSize = await client.query(
+            `INSERT INTO sizes (size_type_id, valor) VALUES ($1, 'Único') RETURNING id`,
+            [sizeTypeId]
+          );
+          sizeId = insertedSize.rows[0].id;
+        } else {
+          sizeId = sizeResult.rows[0].id;
+        }
+      }
+
+      if (!sizeId) {
+        continue;
+      }
+
       await client.query(
         `
         INSERT INTO product_sizes (product_id, size_id, stock)
         VALUES ($1, $2, $3)
         `,
-        [id, s.size_id, s.stock ?? 0]
+        [id, sizeId, s.stock ?? 0]
       );
     }
 

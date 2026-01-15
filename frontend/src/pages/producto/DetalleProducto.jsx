@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProductById } from "../../services/productsService";
 import { useCart } from "../../context/CartContext";
+import { formatPrice } from "../../utils/formatPrice";
+import "./DetalleProducto.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 const BACKEND_BASE_URL = API_URL.replace("/api", "");
@@ -82,116 +84,83 @@ function DetalleProducto() {
   if (!product) return <div className="container mt-4"><p>Producto no encontrado.</p></div>;
 
   return (
-    <div className="container mt-4">
-      <div className="row">
-        
-        {/* IMAGEN */}
-        <div className="col-md-6 mb-4">
-          <img
-            src={getImageUrl(product.image)}
-            alt={product.name}
-            className="img-fluid rounded"
-          />
-        </div>
+    <div className="container detalle-container">
+      {/* IMAGEN */}
+      <div className="detalle-imagen">
+        <img
+          src={getImageUrl(product.image)}
+          alt={product.name}
+        />
+      </div>
 
-        {/* INFORMACIÓN */}
-        <div className="col-md-6">
-          <h2>{product.name}</h2>
-          <p className="text-muted text-capitalize">{product.category}</p>
-          <h4 className="fw-bold mt-3">${product.price}</h4>
+      {/* INFORMACIÓN */}
+      <div className="detalle-info">
+        <h2 className="detalle-titulo">{product.name}</h2>
+        <p className="detalle-categoria">{product.category}</p>
+        <div className="detalle-precio">${formatPrice(product.price)}</div>
 
-          <p className="mt-3">{product.description}</p>
+        <p className="detalle-descripcion">{product.description}</p>
 
-          {/* TALLES */}
-{product.sizes && product.sizes.items && product.sizes.items.length > 0 && (
-  <div className="mt-4">
-    <h5>Talles disponibles:</h5>
-    <div className="d-flex flex-wrap gap-2 mt-2">
-      {[...product.sizes.items]
-        .sort((a, b) => {
-          // 🟦 Pantalones → numérico
-          if (product.category === 'pantalones') {
-            return Number(a.size) - Number(b.size);
-          }
+        {/* TALLES */}
+        {product.sizes && product.sizes.items && product.sizes.items.length > 0 && (
+          <div className="detalle-talles">
+            <h5>Talles disponibles:</h5>
+            <div className="talles-grid">
+              {[...product.sizes.items]
+                .sort((a, b) => {
+                  if (product.category === 'pantalones') {
+                    return Number(a.size) - Number(b.size);
+                  }
+                  const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
+                  return ORDER_ROPA.indexOf(a.size) - ORDER_ROPA.indexOf(b.size);
+                })
+                .map((sizeItem) => (
+                  <button
+                    key={sizeItem.size}
+                    className={`btn-talle ${selectedSize?.size === sizeItem.size ? 'active' : ''} ${sizeItem.stock === 0 ? 'disabled' : ''}`}
+                    onClick={() => setSelectedSize(sizeItem)}
+                    disabled={sizeItem.stock === 0}
+                  >
+                    {sizeItem.size}
+                    {sizeItem.stock === 0 && <small className="d-block">(Sin stock)</small>}
+                  </button>
+                ))}
+            </div>
 
-          // 🟩 Remeras / Buzos → orden de ropa
-          const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
-          return ORDER_ROPA.indexOf(a.size) - ORDER_ROPA.indexOf(b.size);
-        })
-        .map((sizeItem) => (
-          <button
-            key={sizeItem.size}
-            className={`btn ${
-              selectedSize?.size === sizeItem.size
-                ? "btn-primary"
-                : "btn-outline-primary"
-            } ${sizeItem.stock === 0 ? "disabled" : ""}`}
-            onClick={() => setSelectedSize(sizeItem)}
-            disabled={sizeItem.stock === 0}
-          >
-            {sizeItem.size}
-            {sizeItem.stock === 0 && (
-              <small className="d-block">(Sin stock)</small>
+            {selectedSize && (
+              <p className="stock-disponible">
+                Stock disponible: <strong>{selectedSize.stock}</strong> unidades
+              </p>
             )}
-          </button>
-        ))}
-    </div>
+          </div>
+        )}
 
-    {selectedSize && (
-      <p className="mt-2 text-muted">
-        Stock disponible: <strong>{selectedSize.stock}</strong> unidades
-      </p>
-    )}
-  </div>
-)}
-
-
-          {/* CANTIDAD */}
-          {(!product.sizes || product.sizes.items.length === 0) && (
-            <div className="mt-4">
-              <label className="form-label">Cantidad:</label>
-              <input
-                type="number"
-                className="form-control"
-                style={{ maxWidth: "100px" }}
-                min="1"
-                max={product.stock_total || 999}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              />
-              {product.stock_total > 0 && (
-                <small className="text-muted">Stock disponible: {product.stock_total}</small>
-              )}
-            </div>
-          )}
-
-          {product.sizes && product.sizes.items && product.sizes.items.length > 0 && selectedSize && (
-            <div className="mt-3">
-              <label className="form-label">Cantidad:</label>
-              <input
-                type="number"
-                className="form-control"
-                style={{ maxWidth: "100px" }}
-                min="1"
-                max={selectedSize.stock}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(selectedSize.stock, parseInt(e.target.value) || 1)))}
-              />
-            </div>
-          )}
-
-          <button
-            className="btn btn-primary mt-3"
-            onClick={handleAddToCart}
-            disabled={
-              (product.sizes && product.sizes.items && product.sizes.items.length > 0 && !selectedSize) ||
-              (selectedSize && selectedSize.stock < quantity)
-            }
-          >
-            Agregar al carrito
-          </button>
-
+        {/* CANTIDAD */}
+        <div className="detalle-cantidad">
+          <h5>Cantidad:</h5>
+          <div className="cantidad-control">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            >
+              −
+            </button>
+            <span>{quantity}</span>
+            <button
+              onClick={() => setQuantity(Math.min(quantity + 1, selectedSize?.stock || product.stock_total || product.stock))}  
+            >
+              +
+            </button>
+          </div>
         </div>
+
+        {/* BOTÓN AGREGAR */}
+        <button
+          className="btn-agregar-carrito"
+          onClick={handleAddToCart}
+          disabled={!selectedSize && product.sizes && product.sizes.items && product.sizes.items.length > 0}
+        >
+          Agregar al carrito
+        </button>
       </div>
     </div>
   );

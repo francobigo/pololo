@@ -5,14 +5,14 @@ import { Navigation } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/navigation";
+import "../pages/catalogo/CatalogCards.css";
 
 import { getHomeProducts } from "../services/home.service";
-import { useCart } from "../context/CartContext";
 import { getImageUrl } from "../utils/imageUrl";
+import { formatPrice } from "../utils/formatPrice";
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
-  const { addToCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,26 +22,6 @@ const FeaturedProducts = () => {
     });
   }, []);
 
-  const handleAddToCart = (product) => {
-    if (product.stock <= 0) {
-      alert("❌ Producto sin stock disponible");
-      return;
-    }
-    
-    const success = addToCart({
-      id: product.id,
-      name: product.nombre,
-      price: product.precio,
-      image: product.imagen_url,
-      stock: product.stock,
-      category: product.categoria || '',
-      quantity: 1
-    });
-    
-    if (success) {
-      alert("✅ Producto agregado al carrito");
-    }
-  };
 
   const handleViewProduct = (productId) => {
     navigate(`/producto/${productId}`);
@@ -51,7 +31,7 @@ const FeaturedProducts = () => {
 
   return (
     <section className="container my-5 featured-products">
-      <h3 className="mb-4">Productos destacados</h3>
+      <h3 className="mb-4">Destacados</h3>
 
       <Swiper
         modules={[Navigation]}
@@ -66,34 +46,34 @@ const FeaturedProducts = () => {
       >
         {products.map((product) => (
           <SwiperSlide key={product.home_product_id}>
-            <div className="card h-100">
+            <div className="product-card" style={{ cursor: 'pointer' }}>
               {product.imagen_url && (
                 <img
                   src={getImageUrl(product.imagen_url)}
                   alt={product.nombre}
-                  className="card-img-top product-image"
+                  className="catalog-product-image"
                   onClick={() => handleViewProduct(product.id)}
                 />
               )}
 
-              <div className="card-body text-center">
-                <h6 
-                  className="card-title" 
-                  style={{ cursor: "pointer" }}
+              <div className="product-body">
+                <h5 
+                  className="product-name"
                   onClick={() => handleViewProduct(product.id)}
                 >
                   {product.nombre}
-                </h6>
-                <p className="text-muted mb-3">${product.precio}</p>
-
-                <button 
-                  className="btn btn-success btn-sm featured-add-btn"
-                  onClick={() => handleAddToCart(product)}
-                  disabled={product.stock <= 0}
-                >
-                  <i className="bi bi-cart-plus me-1"></i>
-                  {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
-                </button>
+                </h5>
+                
+                <div className="product-footer">
+                  <span className="product-price">${formatPrice(product.precio)}</span>
+                  <button 
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleViewProduct(product.id)}
+                    disabled={product.stock <= 0}
+                  >
+                    {'Comprar'}
+                  </button>
+                </div>
               </div>
             </div>
           </SwiperSlide>

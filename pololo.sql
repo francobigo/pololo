@@ -2,6 +2,7 @@ CREATE TABLE products (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(255) NOT NULL,
   categoria VARCHAR(50) NOT NULL,
+  subcategoria VARCHAR(50),
   descripcion TEXT,
   precio NUMERIC(10,2) NOT NULL,
   imagen_url TEXT,
@@ -51,7 +52,7 @@ CREATE TABLE product_sizes (
 );
 
 -- Datos iniciales para tipos de talles
-INSERT INTO size_types (nombre) VALUES ('ropa'), ('pantalon');
+INSERT INTO size_types (nombre) VALUES ('ropa'), ('pantalon'), ('marroquineria');
 
 -- Datos iniciales para talles de ropa (buzos, remeras)
 INSERT INTO sizes (size_type_id, valor) 
@@ -88,3 +89,21 @@ UNION ALL
 SELECT id, '47' FROM size_types WHERE nombre = 'pantalon';
 UNION ALL
 SELECT id, '48' FROM size_types WHERE nombre = 'pantalon';
+
+-- Datos iniciales para marroquinería (único)
+INSERT INTO sizes (size_type_id, valor)
+SELECT id, 'Único' FROM size_types WHERE nombre = 'marroquineria';
+
+-- Tabla para subcategorías de marroquinería
+CREATE TABLE marroquineria_subcategories (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Insertar subcategorías de marroquinería
+INSERT INTO marroquineria_subcategories (nombre) VALUES 
+('bolso'),
+('mochila'),
+('neceser'),
+('riñonera'),
+('billetera');

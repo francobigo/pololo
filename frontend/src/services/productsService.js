@@ -116,6 +116,7 @@ export async function createProduct(productData) {
 
   formData.append('name', productData.name);
   formData.append('category', productData.category);
+  formData.append('subcategory', productData.subcategory || '');
   formData.append('description', productData.description || '');
   formData.append('price', productData.price);
   formData.append('active', productData.active);
@@ -150,6 +151,7 @@ export async function updateProduct(id, productData) {
 
   formData.append('name', productData.name);
   formData.append('category', productData.category);
+  formData.append('subcategory', productData.subcategory || '');
   formData.append('description', productData.description || '');
   formData.append('price', productData.price);
   formData.append('active', productData.active);

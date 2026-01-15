@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link, useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
+import { formatPrice } from "../../utils/formatPrice";
 import FiltersSidebar from "../../components/filters/FiltersSidebar";
 import "./CatalogCards.css";
 import "./CatalogLayout.css";
@@ -65,7 +66,7 @@ function Remeras() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">Remeras</h1>
+      <h1 className="mb-4" style={{ fontSize: '2.5rem' }}>REMERAS</h1>
 
       <div className="catalog-layout">
         <FiltersSidebar filters={["size", "price"]} />
@@ -88,7 +89,7 @@ function Remeras() {
                       <img
                         src={getImageUrl(p.image)}
                         alt={p.name}
-                        className="product-image"
+                        className="catalog-product-image"
                       />
                     )}
 
@@ -97,7 +98,7 @@ function Remeras() {
                       <p className="product-description">{p.description}</p>
                       
                       <div className="product-footer">
-                        <span className="product-price">${p.price}</span>
+                        <span className="product-price">${formatPrice(p.price)}</span>
                         <span className="product-category">{p.category}</span>
                       </div>
                     </div>

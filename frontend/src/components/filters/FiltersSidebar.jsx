@@ -1,12 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import "./FiltersSidebar.css";
 
-export default function FiltersSidebar({ filters }) {
+export default function FiltersSidebar({ filters, subcategories = [] }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeCategory = searchParams.get("category");
   const activeSize = searchParams.get("size");
   const activePrice = searchParams.get("price");
+  const activeSubcategory = searchParams.get("subcategory");
 
   const handleFilterChange = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
@@ -27,8 +28,8 @@ export default function FiltersSidebar({ filters }) {
   return (
     <div className="filters-sidebar">
       <div className="filters-header">
-        <h5 className="filters-title">Filtros</h5>
-        {(activeCategory || activeSize || activePrice) && (
+        <h5 className="filters-title">FILTROS</h5>
+        {(activeCategory || activeSize || activePrice || activeSubcategory) && (
           <button
             className="btn btn-link btn-sm text-muted p-0"
             onClick={clearFilters}
@@ -37,6 +38,30 @@ export default function FiltersSidebar({ filters }) {
           </button>
         )}
       </div>
+
+      {/* SUBCATEGORÍAS (p.ej. Marroquinería) */}
+      {filters.includes("subcategory") && subcategories.length > 0 && (
+        <div className="filter-section">
+          <h6 className="filter-section-title">Subcategoría</h6>
+          <div className="filter-options">
+            <button
+              className={`filter-option ${!activeSubcategory ? "active" : ""}`}
+              onClick={() => handleFilterChange("subcategory", "")}
+            >
+              Todas
+            </button>
+            {subcategories.map((sub) => (
+              <button
+                key={sub}
+                className={`filter-option ${activeSubcategory === sub ? "active" : ""}`}
+                onClick={() => handleFilterChange("subcategory", activeSubcategory === sub ? "" : sub)}
+              >
+                {sub.charAt(0).toUpperCase() + sub.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* CATEGORÍAS */}
       {filters.includes("category") && (

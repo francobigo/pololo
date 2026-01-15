@@ -17,4 +17,27 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// 👉 interceptor para manejar errores de autenticación
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Si el error es 401 (no autorizado) y estamos en una ruta de admin
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname;
+      
+      // Solo redirigir si estamos en una ruta de admin
+      if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
+        // Limpiar el token y usuario
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+        
+        // Redirigir al login del admin
+        window.location.href = '/admin/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export const getHealth = () => apiClient.get('/health');

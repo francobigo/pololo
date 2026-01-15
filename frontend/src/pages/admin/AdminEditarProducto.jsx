@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { getProductById, updateProduct } from "../../services/productsService";
 import { apiClient } from "../../services/apiClient";
+import { getImageUrl } from "../../utils/imageUrl";
 
 function AdminEditarProducto() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ function AdminEditarProducto() {
   const [form, setForm] = useState({
     name: "",
     category: "",
+    subcategory: "",
     description: "",
     price: "",
     image: "",      // URL actual (si viene de la BD)
@@ -25,6 +27,8 @@ function AdminEditarProducto() {
   // Estados para talles
   const [availableSizes, setAvailableSizes] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
+  const [marroquineriaSubcategories, setMarroquineriaSubcategories] = useState([]);
+  const [marroquineriaStock, setMarroquineriaStock] = useState(0);
   const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
 
 
@@ -35,6 +39,7 @@ function AdminEditarProducto() {
         setForm({
           name: data.name || "",
           category: data.category || "marroquineria",
+          subcategory: data.subcategory || "",
           description: data.description || "",
           price: data.price ?? "",
           image: data.image || "",
@@ -50,6 +55,14 @@ function AdminEditarProducto() {
             stock: item.stock || 0
           }));
           setSelectedSizes(sizesData);
+
+          // Si es marroquinería, extraer el stock del talle "Único"
+          if (data.category === 'marroquineria') {
+            const unicoSize = sizesData.find(s => s.size_id);
+            if (unicoSize) {
+              setMarroquineriaStock(unicoSize.stock);
+            }
+          }
         }
       } catch (err) {
         console.error(err);
@@ -70,6 +83,13 @@ function AdminEditarProducto() {
         setAvailableSizes([]);
         if (!initialLoad) {
           setSelectedSizes([]);
+        setMarroquineriaSubcategories([
+          { id: 1, nombre: 'bolso' },
+          { id: 2, nombre: 'mochila' },
+          { id: 3, nombre: 'neceser' },
+          { id: 4, nombre: 'riñonera' },
+          { id: 5, nombre: 'billetera' }
+        ]);
         }
         return;
       }
@@ -139,11 +159,30 @@ function AdminEditarProducto() {
     e.preventDefault();
     setError(null);
 
+    // Validar que marroquinería tenga subcategoría
+    if (form.category === 'marroquineria' && !form.subcategory) {
+      setError("Debes seleccionar una subcategoría para marroquinería");
+      return;
+    }
+
+    // Validar stock de marroquinería
+    if (form.category === 'marroquineria' && marroquineriaStock <= 0) {
+      setError("El stock de marroquinería debe ser mayor a 0");
+      return;
+    }
+
     try {
+      // Para marroquinería, usar el stock actualizado
+      let sizes = selectedSizes.filter((s) => s.stock > 0);
+      
+      if (form.category === 'marroquineria') {
+        sizes = [{ size_type: 'marroquineria', size_value: 'Único', stock: marroquineriaStock }];
+      }
+
       await updateProduct(id, {
         ...form,
         price: parseFloat(form.price),
-        sizes: selectedSizes.filter((s) => s.stock > 0),
+        sizes: sizes,
       });
 
       navigate("/admin/productos");
@@ -210,6 +249,27 @@ function AdminEditarProducto() {
           </select>
         </div>
 
+        {/* SUBCATEGORÍA PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Subcategoría</label>
+            <select
+              className="form-select"
+              name="subcategory"
+              value={form.subcategory}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona una subcategoría</option>
+              {marroquineriaSubcategories.map((sub) => (
+                <option key={sub.id} value={sub.nombre}>
+                  {sub.nombre.charAt(0).toUpperCase() + sub.nombre.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="mb-3">
           <label className="form-label">Descripción</label>
           <textarea
@@ -240,9 +300,9 @@ function AdminEditarProducto() {
           {form.image ? (
             <div className="mb-2">
               <img
-                src={form.image}
+                src={getImageUrl(form.image)}
                 alt={form.name}
-                style={{ maxWidth: "150px", borderRadius: "4px" }}
+                className="admin-product-preview"
               />
             </div>
           ) : (
@@ -257,6 +317,22 @@ function AdminEditarProducto() {
             onChange={handleFileChange}
           />
         </div>
+
+       {/* STOCK PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Stock</label>
+            <input
+              type="number"
+              className="form-control"
+              value={marroquineriaStock}
+              onChange={(e) => setMarroquineriaStock(parseInt(e.target.value) || 0)}
+              required
+              min="0"
+              placeholder="Ingresa la cantidad en stock"
+            />
+          </div>
+        )}
 
        {/* TALLES (solo si no es marroquinería) */}
 {form.category !== 'marroquineria' && availableSizes.length > 0 && (

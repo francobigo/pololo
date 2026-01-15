@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link, useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
+import { formatPrice } from "../../utils/formatPrice";
 import FiltersSidebar from "../../components/filters/FiltersSidebar";
 import "./CatalogCards.css";
 import "./CatalogLayout.css";
@@ -65,7 +66,7 @@ function Pantalones() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">Pantalones</h1>
+      <h1 className="mb-4" style={{ fontSize: '2.5rem' }}>PANTALONES</h1>
 
       <div className="catalog-layout">
         <FiltersSidebar filters={["size", "price"]} />
@@ -88,7 +89,7 @@ function Pantalones() {
                       <img
                         src={getImageUrl(p.image)}
                         alt={p.name}
-                        className="product-image"
+                        className="catalog-product-image"
                       />
                     )}
 
@@ -97,7 +98,7 @@ function Pantalones() {
                       <p className="product-description">{p.description}</p>
                       
                       <div className="product-footer">
-                        <span className="product-price">${p.price}</span>
+                        <span className="product-price">${formatPrice(p.price)}</span>
                         <span className="product-category">{p.category}</span>
                       </div>
                     </div>

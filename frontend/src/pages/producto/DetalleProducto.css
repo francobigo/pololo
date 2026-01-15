@@ -1,0 +1,194 @@
+/* Estilos para la página de detalle de producto */
+
+.detalle-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+  margin-top: 30px;
+}
+
+.detalle-imagen {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+}
+
+.detalle-imagen img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.detalle-info {
+  padding: 20px;
+}
+
+.detalle-titulo {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.detalle-categoria {
+  color: #b8b8b8;
+  font-size: 14px;
+  text-transform: capitalize;
+  margin-bottom: 16px;
+}
+
+.detalle-precio {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 16px 0;
+}
+
+.detalle-descripcion {
+  color: #d4d4d4;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 20px 0;
+}
+
+.detalle-talles {
+  margin-top: 28px;
+}
+
+.detalle-talles h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.talles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.btn-talle {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 2px solid #444;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-talle:hover:not(:disabled) {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+}
+
+.btn-talle.active {
+  background: #ffffff;
+  color: #000;
+  border-color: #ffffff;
+}
+
+.btn-talle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.detalle-cantidad {
+  margin-top: 20px;
+}
+
+.detalle-cantidad h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.cantidad-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+}
+
+.cantidad-control button {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #444;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.cantidad-control button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #2a2a2a;
+}
+
+.cantidad-control span {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.stock-disponible {
+  color: #b8b8b8;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.btn-agregar-carrito {
+  width: 100%;
+  padding: 14px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-agregar-carrito:hover {
+  background: #218838;
+}
+
+.btn-agregar-carrito:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .detalle-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .detalle-titulo {
+    font-size: 24px;
+  }
+
+  .detalle-precio {
+    font-size: 24px;
+  }
+
+  .detalle-imagen {
+    padding: 15px;
+  }
+}

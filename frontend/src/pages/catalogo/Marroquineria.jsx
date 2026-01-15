@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getProducts } from "../../services/productsService";
 import { Link, useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
+import { formatPrice } from "../../utils/formatPrice";
 import FiltersSidebar from "../../components/filters/FiltersSidebar";
 import "./CatalogCards.css";
 import "./CatalogLayout.css";
@@ -14,6 +15,9 @@ function Marroquineria() {
 
   const [searchParams] = useSearchParams();
   const priceOrder = searchParams.get("price") || "desc"; // 🔹 default desc
+  const activeSubcategory = (searchParams.get("subcategory") || "").toLowerCase();
+
+  const subcategories = ["bolso", "mochila", "neceser", "riñonera", "billetera"];
 
   useEffect(() => {
     setLoading(true);
@@ -34,11 +38,16 @@ function Marroquineria() {
   useEffect(() => {
     let result = [...products];
 
+    // Filtrar por subcategoría si está seleccionada
+    if (activeSubcategory) {
+      result = result.filter(p => (p.subcategory || '').toLowerCase() === activeSubcategory);
+    }
+
     // 🔹 siempre mayor a menor
     result.sort((a, b) => b.price - a.price);
 
     setFiltered(result);
-  }, [priceOrder, products]);
+  }, [priceOrder, products, activeSubcategory]);
 
   if (loading) {
     return (
@@ -56,28 +65,21 @@ function Marroquineria() {
     );
   }
 
-  if (filtered.length === 0) {
-    return (
-      <div className="container mt-4">
-        <h1 className="mb-4">Marroquinería</h1>
-        <p>No hay productos en esta categoría.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">Marroquinería</h1>
+      <h1 className="mb-4" style={{ fontSize: '2.5rem' }}>MARROQUINERIA</h1>
 
       <div className="catalog-layout">
-        <FiltersSidebar filters={["price"]} />
+        <FiltersSidebar filters={["subcategory", "price"]} subcategories={subcategories} />
 
         <div>
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && (
             <div className="no-products">
               <p>No hay productos en esta categoría.</p>
             </div>
-          ) : (
+          )}
+
+          {filtered.length > 0 && (
             <div className="products-grid">
               {filtered.map((p) => (
                 <Link
@@ -90,7 +92,7 @@ function Marroquineria() {
                       <img
                         src={getImageUrl(p.image)}
                         alt={p.name}
-                        className="product-image"
+                        className="catalog-product-image"
                       />
                     )}
 
@@ -99,7 +101,7 @@ function Marroquineria() {
                       <p className="product-description">{p.description}</p>
                       
                       <div className="product-footer">
-                        <span className="product-price">${p.price}</span>
+                        <span className="product-price">${formatPrice(p.price)}</span>
                         <span className="product-category">{p.category}</span>
                       </div>
                     </div>

@@ -78,18 +78,6 @@ function Navbar() {
             </Link>
           </li>
 
-          <li className="nav-item">
-            <Link className="nav-link" to="/nosotros">
-              Nosotros
-            </Link>
-          </li>
-
-          <li className="nav-item">
-            <Link className="nav-link" to="/contacto">
-              Contacto
-            </Link>
-          </li>
-
         </ul>
 
         {/* 🔍 BUSCADOR */}
@@ -100,6 +88,7 @@ function Navbar() {
             placeholder="Buscar productos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            style={{ '--placeholder-color': '#ffffff' }}
           />
         </form>
 

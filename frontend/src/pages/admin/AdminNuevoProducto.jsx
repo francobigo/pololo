@@ -10,6 +10,7 @@ function AdminNuevoProducto() {
   const [form, setForm] = useState({
     name: "",
     category: "marroquineria",
+    subcategory: "",
     description: "",
     price: "",
     active: true,
@@ -22,16 +23,25 @@ function AdminNuevoProducto() {
   // Estados para talles
   const [availableSizes, setAvailableSizes] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
+  const [marroquineriaSubcategories, setMarroquineriaSubcategories] = useState([]);
+  const [marroquineriaStock, setMarroquineriaStock] = useState(0);
 
   // Cargar talles cuando cambia la categoría
   useEffect(() => {
     const loadSizes = async () => {
       const category = form.category;
       
-      // Marroquinería no tiene talles
+      // Marroquinería no tiene talles pero tiene subcategorías
       if (category === 'marroquineria') {
         setAvailableSizes([]);
         setSelectedSizes([]);
+        setMarroquineriaSubcategories([
+          { id: 1, nombre: 'bolso' },
+          { id: 2, nombre: 'mochila' },
+          { id: 3, nombre: 'neceser' },
+          { id: 4, nombre: 'riñonera' },
+          { id: 5, nombre: 'billetera' }
+        ]);
         return;
       }
 
@@ -154,11 +164,33 @@ function AdminNuevoProducto() {
     e.preventDefault();
     setError(null);
 
+    // Validar que marroquinería tenga subcategoría
+    if (form.category === 'marroquineria' && !form.subcategory) {
+      setError("Debes seleccionar una subcategoría para marroquinería");
+      return;
+    }
+
+    // Validar stock de marroquinería
+    if (form.category === 'marroquineria' && marroquineriaStock <= 0) {
+      setError("El stock de marroquinería debe ser mayor a 0");
+      return;
+    }
+
     try {
+      // Para marroquinería, crear array de sizes con el talle "Único"
+      let sizes = selectedSizes.filter((s) => s.stock > 0);
+      
+      if (form.category === 'marroquineria') {
+        // El backend espera un array de { size_id, stock }
+        // Para marroquinería usamos size_id: "marroquineria_unico" como placeholder
+        // Luego en el backend buscaremos el size_id real del talle "Único"
+        sizes = [{ size_type: 'marroquineria', size_value: 'Único', stock: marroquineriaStock }];
+      }
+
       await createProduct({
         ...form,
         price: parseFloat(form.price),
-        sizes: selectedSizes.filter((s) => s.stock > 0), // Solo enviar talles con stock
+        sizes: sizes,
       });
 
       navigate("/admin/productos");
@@ -202,6 +234,27 @@ function AdminNuevoProducto() {
             <option value="buzos">Buzos</option>
           </select>
         </div>
+
+        {/* SUBCATEGORÍA PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Subcategoría</label>
+            <select
+              className="form-select"
+              name="subcategory"
+              value={form.subcategory}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona una subcategoría</option>
+              {marroquineriaSubcategories.map((sub) => (
+                <option key={sub.id} value={sub.nombre}>
+                  {sub.nombre.charAt(0).toUpperCase() + sub.nombre.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="mb-3">
           <label className="form-label">Descripción</label>
@@ -263,6 +316,22 @@ function AdminNuevoProducto() {
             >
               Quitar imagen
             </button>
+          </div>
+        )}
+
+        {/* STOCK PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Stock</label>
+            <input
+              type="number"
+              className="form-control"
+              value={marroquineriaStock}
+              onChange={(e) => setMarroquineriaStock(parseInt(e.target.value) || 0)}
+              required
+              min="0"
+              placeholder="Ingresa la cantidad en stock"
+            />
           </div>
         )}
 
