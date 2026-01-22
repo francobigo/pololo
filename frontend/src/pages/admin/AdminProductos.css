@@ -414,11 +414,91 @@
     width: 100%;
     justify-content: space-between;
   }
+
+  .admin-filters-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .admin-filters-card {
+    padding: 20px;
+  }
+
+  .admin-filters-title {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 768px) {
   .admin-header h1 {
     font-size: 24px;
+  }
+
+  .admin-filters-card {
+    padding: 16px;
+  }
+
+  .admin-filters-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .admin-filters-title {
+    font-size: 15px;
+  }
+
+  .admin-btn-clear-filters {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+
+  .admin-filters-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .admin-filter-group {
+    width: 100%;
+  }
+
+  .admin-filter-label {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .admin-form-input,
+  .admin-form-select {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .admin-input-clear {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .admin-filters-summary {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+
+  .admin-filters-summary > span:first-child {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .filters-active-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    white-space: nowrap;
   }
 
   .admin-table {
@@ -471,24 +551,66 @@
     font-size: 11px;
     padding: 6px 10px;
   }
+}
 
-  .admin-filters-row {
-    grid-template-columns: 1fr;
+@media (max-width: 576px) {
+  .admin-header h1 {
+    font-size: 20px;
   }
 
-  .admin-filters-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .admin-filters-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .admin-filters-title {
+    font-size: 14px;
   }
 
   .admin-btn-clear-filters {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .admin-filter-label {
+    font-size: 10px;
+  }
+
+  .admin-form-input,
+  .admin-form-select {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .admin-filters-summary {
+    font-size: 11px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .admin-filters-summary > span:first-child {
+    font-size: 11px;
+  }
+
+  .filters-active-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .admin-btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-btn-nav {
     width: 100%;
     justify-content: center;
   }
 
-  .admin-filters-summary {
-    flex-direction: column;
-    align-items: flex-start;
+  .admin-btn-nuevo {
+    width: 100%;
+    justify-content: center;
   }
 }
 
