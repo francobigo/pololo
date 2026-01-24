@@ -375,17 +375,17 @@ const handleDrop = async (e, targetItem) => {
   const handleProductDrop = async (e, targetItem) => {
     e.preventDefault();
     
-    if (!draggedProductItem || draggedProductItem.id === targetItem.id) {
+    if (!draggedProductItem || draggedProductItem.home_product_id === targetItem.home_product_id) {
       setDraggedProductItem(null);
       return;
     }
 
     try {
       const newProducts = homeProducts.map((item) => {
-        if (item.id === draggedProductItem.id) {
+        if (item.home_product_id === draggedProductItem.home_product_id) {
           return { ...item, orden: targetItem.orden };
         }
-        if (item.id === targetItem.id) {
+        if (item.home_product_id === targetItem.home_product_id) {
           return { ...item, orden: draggedProductItem.orden };
         }
         return item;
@@ -474,250 +474,252 @@ const handleDrop = async (e, targetItem) => {
       <div className="admin-section">
         <h2 className="admin-section-title">Carrusel</h2>
 
-      <form onSubmit={handleCarouselSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Imagen del carrusel</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="form-control"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
+        <div className="admin-card admin-form-card">
+          <h3 className="admin-form-title">Agregar imagen al carrusel</h3>
 
-              if (imagePreview) {
-                URL.revokeObjectURL(imagePreview);
-              }
+          <form onSubmit={handleCarouselSubmit} className="admin-form-grid">
+            <div className="admin-form-group">
+              <label className="admin-form-label">Imagen del carrusel</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="admin-form-input admin-file-input"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
 
-              setCarouselForm({
-                ...carouselForm,
-                image: file,
-              });
+                  if (imagePreview) {
+                    URL.revokeObjectURL(imagePreview);
+                  }
 
-              setImagePreview(URL.createObjectURL(file));
-            }}
-          />
-          <div className="form-text">
-            <strong>Dimensiones:</strong><br />
-            • Mínimo: 1600×500 px | Máximo: 3000×1200 px<br />
-            • <span className="text-primary">Recomendado: 1920×600 px</span>
-          </div>
-        </div>
-
-          <div className="mb-3">
-            <label className="form-label">Imagen para celular (opcional)</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="form-control"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                if (imageMobilePreview) {
-                  URL.revokeObjectURL(imageMobilePreview);
-                }
-
-                setCarouselForm({
-                  ...carouselForm,
-                  image_mobile: file,
-                });
-
-                setImageMobilePreview(URL.createObjectURL(file));
-              }}
-            />
-            <div className="form-text">
-              <strong>Dimensiones sugeridas para móvil:</strong><br />
-              • Ancho mínimo: 600px | Alto mínimo: 400px<br />
-              • Recomendado: 800×1000 (vertical) o 800×600 (caja móvil)
-            </div>
-          </div>
-
-        {imagePreview && (
-          <div className="mb-3">
-            <p className="mb-2">Preview:</p>
-            <img
-              src={imagePreview}
-              alt="Preview carrusel"
-              className="img-fluid rounded border mb-2"
-              style={{ maxWidth: "100%", maxHeight: "200px", objectFit: "cover" }}
-            />
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              onClick={() => {
-                URL.revokeObjectURL(imagePreview);
-                setImagePreview(null);
-                setCarouselForm({
-                  ...carouselForm,
-                  image: null,
-                });
-
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              }}
-            >
-              Quitar imagen
-            </button>
-          </div>
-        )}
-
-          {imageMobilePreview && (
-            <div className="mb-3">
-              <p className="mb-2">Preview móvil:</p>
-              <img
-                src={imageMobilePreview}
-                alt="Preview móvil"
-                className="img-fluid rounded border mb-2"
-                style={{ maxWidth: "200px", maxHeight: "300px", objectFit: "cover" }}
-              />
-              <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                onClick={() => {
-                  URL.revokeObjectURL(imageMobilePreview);
-                  setImageMobilePreview(null);
                   setCarouselForm({
                     ...carouselForm,
-                    image_mobile: null,
+                    image: file,
                   });
-                }}
-              >
-                Quitar imagen móvil
-              </button>
-            </div>
-          )}
 
-        <div className="mb-3">
-          <input
-            type="number"
-            className="form-control"
-            placeholder="Orden (opcional)"
-            min="1"
-            value={carouselForm.orden}
-            onChange={(e) =>
-              setCarouselForm({ ...carouselForm, orden: e.target.value })
-            }
-          />
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+              />
+              <p className="admin-hint">
+                <strong>Dimensiones:</strong> Mínimo 1600×500 px | Máximo 3000×1200 px. Recomendado 1920×600 px.
+              </p>
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Imagen para celular (opcional)</label>
+              <input
+                ref={fileMobileInputRef}
+                type="file"
+                accept="image/*"
+                className="admin-form-input admin-file-input"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  if (imageMobilePreview) {
+                    URL.revokeObjectURL(imageMobilePreview);
+                  }
+
+                  setCarouselForm({
+                    ...carouselForm,
+                    image_mobile: file,
+                  });
+
+                  setImageMobilePreview(URL.createObjectURL(file));
+                }}
+              />
+              <p className="admin-hint">
+                <strong>Móvil:</strong> mínimo 600×400 px. Recomendado 800×1000 (vertical) u 800×600 (caja móvil).
+              </p>
+            </div>
+
+            <div className="admin-preview-stack">
+              {imagePreview && (
+                <div className="admin-preview-card">
+                  <div className="admin-preview-label">Preview escritorio</div>
+                  <img
+                    src={imagePreview}
+                    alt="Preview carrusel"
+                    className="admin-preview-img"
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-danger"
+                    onClick={() => {
+                      URL.revokeObjectURL(imagePreview);
+                      setImagePreview(null);
+                      setCarouselForm({
+                        ...carouselForm,
+                        image: null,
+                      });
+
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    Quitar imagen
+                  </button>
+                </div>
+              )}
+
+              {imageMobilePreview && (
+                <div className="admin-preview-card">
+                  <div className="admin-preview-label">Preview móvil</div>
+                  <img
+                    src={imageMobilePreview}
+                    alt="Preview móvil"
+                    className="admin-preview-img mobile"
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-danger"
+                    onClick={() => {
+                      URL.revokeObjectURL(imageMobilePreview);
+                      setImageMobilePreview(null);
+                      setCarouselForm({
+                        ...carouselForm,
+                        image_mobile: null,
+                      });
+
+                      if (fileMobileInputRef.current) {
+                        fileMobileInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    Quitar imagen móvil
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="admin-form-row">
+              <input
+                type="number"
+                className="admin-form-input"
+                placeholder="Orden (opcional)"
+                min="1"
+                value={carouselForm.orden}
+                onChange={(e) =>
+                  setCarouselForm({ ...carouselForm, orden: e.target.value })
+                }
+              />
+              <button type="submit" className="admin-btn admin-btn-primary">Agregar imagen</button>
+            </div>
+          </form>
         </div>
 
-        <button type="submit" className="btn btn-primary">Agregar imagen</button>
-      </form>
-      <h4 className="mt-4 mb-3">Imágenes actuales</h4>
+        <div className="admin-card admin-media-card">
+          <div className="admin-card-title">Imágenes actuales</div>
 
-      {/* Apaisadas (desktop/landscape) */}
-      <h5 className="mt-3">Apaisadas</h5>
-      <div className="row g-3 mb-4">
-        {carousel.filter(i => i.imagen_url).length === 0 && (
-          <div className="col-12"><div className="alert alert-secondary">No hay imágenes apaisadas.</div></div>
-        )}
+          <div className="admin-subtitle">Apaisadas</div>
+          <div className="admin-media-grid">
+            {carousel.filter(i => i.imagen_url).length === 0 && (
+              <div className="admin-empty-state">No hay imágenes apaisadas.</div>
+            )}
 
-        {carousel.filter(i => i.imagen_url).map((item) => (
-          <div key={`land-${item.id}`} className="col-12 col-sm-6 col-lg-4">
-            <div
-              draggable
-              onDragStart={(e) => handleDragStart(e, item)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, item)}
-              className="card h-100"
-              style={{
-                cursor: "move",
-                opacity: draggedItem?.id === item.id ? 0.7 : 1,
-                backgroundColor: draggedItem?.id === item.id ? "#e7f3ff" : "transparent",
-                transition: "all 0.2s ease",
-                border: draggedItem?.id === item.id ? "2px solid #007bff" : "1px solid #dee2e6",
-              }}
-            >
-              <img
-                src={`${API_URL}${item.imagen_url}`}
-                alt={item.titulo}
-                className="card-img-top"
-                style={{ height: "180px", objectFit: "cover" }}
-              />
+            {carousel.filter(i => i.imagen_url).map((item) => (
+              <div
+                key={`land-${item.id}`}
+                className={`admin-carousel-card ${draggedItem?.id === item.id ? "dragging" : ""}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item)}
+              >
+                <img
+                  src={`${API_URL}${item.imagen_url}`}
+                  alt={item.titulo}
+                  className="admin-carousel-image"
+                />
 
-              <div className="card-body">
-                <h6 className="card-title">{item.titulo || "Sin título"}</h6>
-                <p className="card-text text-muted small">Orden: {item.orden}</p>
-                {item.imagen_mobile_url && <div className="mb-2"><small className="text-muted">Tiene versión móvil</small></div>}
-                <div className="d-grid gap-2">
-                  <button
-                    onClick={() => handleToggleCarousel(item)}
-                    className={`btn btn-sm ${item.activo ? "btn-success" : "btn-secondary"}`}
-                  >
-                    {item.activo ? "✓ Activo" : "○ Inactivo"}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCarouselImage(item.id, 'imagen_url')}
-                    className="btn btn-sm btn-danger"
-                  >
-                    Eliminar
-                  </button>
+                <div className="admin-card-body">
+                  <div className="admin-card-title small">{item.titulo || "Sin título"}</div>
+                  <div className="admin-meta">Orden: {item.orden}</div>
+                  {item.imagen_mobile_url && <span className="admin-pill">Tiene versión móvil</span>}
+                  <div className="admin-card-actions">
+                    <button
+                      onClick={() => handleToggleCarousel(item)}
+                      className={`admin-btn ${item.activo ? "admin-btn-success" : "admin-btn-secondary"}`}
+                      type="button"
+                    >
+                      {item.activo ? "✓ Activo" : "○ Inactivo"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCarouselImage(item.id, 'imagen_url')}
+                      className="admin-btn admin-btn-danger"
+                      type="button"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Móviles (mobile/portrait) */}
-      <h5 className="mt-3">Móviles</h5>
-      <div className="row g-3 mb-5">
-        {carousel.filter(i => i.imagen_mobile_url).length === 0 && (
-          <div className="col-12"><div className="alert alert-secondary">No hay imágenes móviles.</div></div>
-        )}
+          <div className="admin-subtitle">Móviles</div>
+          <div className="admin-media-grid">
+            {carousel.filter(i => i.imagen_mobile_url).length === 0 && (
+              <div className="admin-empty-state">No hay imágenes móviles.</div>
+            )}
 
-        {carousel.filter(i => i.imagen_mobile_url).map((item) => (
-          <div key={`mob-${item.id}`} className="col-12 col-sm-6 col-md-4 col-lg-3">
-            <div className="card h-100">
-              <img
-                src={`${API_URL}${item.imagen_mobile_url}`}
-                alt={item.titulo}
-                className="card-img-top"
-                style={{ height: "220px", objectFit: "cover" }}
-              />
+            {carousel.filter(i => i.imagen_mobile_url).map((item) => (
+              <div
+                key={`mob-${item.id}`}
+                className={`admin-carousel-card mobile ${draggedItem?.id === item.id ? "dragging" : ""}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item)}
+              >
+                <img
+                  src={`${API_URL}${item.imagen_mobile_url}`}
+                  alt={item.titulo}
+                  className="admin-carousel-image"
+                />
 
-              <div className="card-body">
-                <h6 className="card-title">{item.titulo || "Sin título"}</h6>
-                <p className="card-text text-muted small">Orden: {item.orden}</p>
-                <div className="d-grid gap-2">
-                  <button
-                    onClick={() => handleToggleCarousel(item)}
-                    className={`btn btn-sm ${item.activo ? "btn-success" : "btn-secondary"}`}
-                  >
-                    {item.activo ? "✓ Activo" : "○ Inactivo"}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCarouselImage(item.id, 'imagen_mobile_url')}
-                    className="btn btn-sm btn-danger"
-                  >
-                    Eliminar
-                  </button>
+                <div className="admin-card-body">
+                  <div className="admin-card-title small">{item.titulo || "Sin título"}</div>
+                  <div className="admin-meta">Orden: {item.orden}</div>
+                  <div className="admin-card-actions">
+                    <button
+                      onClick={() => handleToggleCarousel(item)}
+                      className={`admin-btn ${item.activo ? "admin-btn-success" : "admin-btn-secondary"}`}
+                      type="button"
+                    >
+                      {item.activo ? "✓ Activo" : "○ Inactivo"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCarouselImage(item.id, 'imagen_mobile_url')}
+                      className="admin-btn admin-btn-danger"
+                      type="button"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
-
 
       {/* ===================== */}
       {/* PRODUCTOS DESTACADOS */}
       {/* ===================== */}
-      </div>
-
       <div className="admin-section">
         <h2 className="admin-section-title">Productos Destacados</h2>
 
-        <div className="admin-form-card">
+        <div className="admin-card admin-form-card">
           <div className="admin-form-title">Agregar producto destacado</div>
           
           <div className="admin-form-group">
-            <label className="admin-label">Buscar producto</label>
+            <label className="admin-form-label">Buscar producto</label>
             <input
               type="text"
-              className="admin-input"
+              className="admin-form-input"
               placeholder="Buscar producto..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
@@ -726,50 +728,24 @@ const handleDrop = async (e, targetItem) => {
 
           {searchResults.length > 0 && (
             <div className="admin-form-group">
-              <label className="admin-label">Resultados de búsqueda</label>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'auto' }}>
+              <label className="admin-form-label">Resultados de búsqueda</label>
+              <ul className="admin-search-results">
                 {searchResults.map((product) => (
                   <li 
                     key={product.id}
+                    className={`admin-search-result ${productForm.product_id === product.id ? "active" : ""}`}
                     onClick={() =>
                       setProductForm({
                         product_id: product.id,
                         orden: "",
                       })
                     }
-                    style={{
-                      padding: '12px',
-                      marginBottom: '8px',
-                      background: 'rgba(102, 126, 234, 0.1)',
-                      border: '1px solid rgba(102, 126, 234, 0.3)',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                      e.currentTarget.style.borderColor = '#667eea';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.3)';
-                    }}
                   >
                     <div>
-                      <strong style={{ color: '#ffffffd9' }}>{product.nombre}</strong>
-                      <span style={{ color: '#b8b8b8', marginLeft: '12px', fontSize: '12px' }}>${product.precio}</span>
+                      <strong className="admin-search-name">{product.nombre}</strong>
+                      <span className="admin-search-price">${product.precio}</span>
                     </div>
-                    <span style={{
-                      background: '#667eea',
-                      color: 'white',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>Seleccionar</span>
+                    <span className="admin-pill">Seleccionar</span>
                   </li>
                 ))}
               </ul>
@@ -777,36 +753,24 @@ const handleDrop = async (e, targetItem) => {
           )}
 
           {productForm.product_id && (
-            <div style={{
-              background: 'rgba(102, 126, 234, 0.1)',
-              border: '1px solid rgba(102, 126, 234, 0.3)',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '16px'
-            }}>
+            <div className="admin-selected-product">
               {(() => {
                 const selectedProduct = searchResults.find(p => p.id === productForm.product_id);
                 return (
                   <div>
-                    <strong style={{ color: '#ffffffd9' }}>Producto seleccionado:</strong>
+                    <div className="admin-selected-label">Producto seleccionado</div>
                     {selectedProduct && (
-                      <div style={{ marginTop: '12px' }}>
+                      <div className="admin-selected-body">
                         {selectedProduct.imagen && (
                           <img
                             src={selectedProduct.imagen}
                             alt={selectedProduct.nombre}
-                            style={{
-                              maxWidth: '100%',
-                              maxHeight: '200px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                              marginBottom: '12px'
-                            }}
+                            className="admin-selected-image"
                           />
                         )}
-                        <div style={{ marginTop: '12px' }}>
-                          <p style={{ marginBottom: '4px', color: '#ffffffd9' }}><strong>{selectedProduct.nombre}</strong></p>
-                          <p style={{ marginBottom: 0, color: '#b8b8b8', fontSize: '12px' }}>${selectedProduct.precio}</p>
+                        <div className="admin-selected-info">
+                          <p className="admin-selected-name">{selectedProduct.nombre}</p>
+                          <p className="admin-selected-price">${selectedProduct.precio}</p>
                         </div>
                       </div>
                     )}
@@ -816,138 +780,79 @@ const handleDrop = async (e, targetItem) => {
             </div>
           )}
 
-          <form onSubmit={handleProductSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '12px', alignItems: 'start' }}>
-              <div style={{ flex: 1 }}>
-                <input
-                  type="number"
-                  className="admin-input"
-                  placeholder="Orden (opcional)"
-                  min="1"
-                  value={productForm.orden}
-                  onChange={(e) =>
-                    setProductForm({ ...productForm, orden: e.target.value })
-                  }
-                />
-                <div style={{ fontSize: '12px', color: '#b8b8b8', marginTop: '4px' }}>Dejá vacío para orden automática</div>
-              </div>
-              <button 
-                type="submit" 
-                className="admin-btn admin-btn-success"
-                disabled={!productForm.product_id}
-                style={{ marginTop: '0' }}
-              >
-                Agregar
-              </button>
+          <form onSubmit={handleProductSubmit} className="admin-form-row">
+            <div className="admin-form-group compact">
+              <input
+                type="number"
+                className="admin-form-input"
+                placeholder="Orden (opcional)"
+                min="1"
+                value={productForm.orden}
+                onChange={(e) =>
+                  setProductForm({ ...productForm, orden: e.target.value })
+                }
+              />
+              <div className="admin-hint">Dejá vacío para orden automática</div>
             </div>
+            <button 
+              type="submit" 
+              className="admin-btn admin-btn-success"
+              disabled={!productForm.product_id}
+            >
+              Agregar
+            </button>
           </form>
         </div>
       
-      {homeProducts.length > 0 && (
-        <>
-          <h3 className="admin-section-title" style={{ marginTop: '32px', marginBottom: '20px' }}>
-            Productos cargados ({homeProducts.length})
-          </h3>
+        {homeProducts.length > 0 && (
+          <div className="admin-card">
+            <div className="admin-card-title">Productos cargados ({homeProducts.length})</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-            {homeProducts.map((item) => (
-              <div key={item.home_product_id}>
+            <div className="admin-product-grid">
+              {homeProducts.map((item) => (
                 <div
+                  key={item.home_product_id}
+                  className={`admin-home-product-card ${draggedProductItem?.home_product_id === item.home_product_id ? "dragging" : ""}`}
                   draggable
                   onDragStart={(e) => handleProductDragStart(e, item)}
                   onDragOver={handleProductDragOver}
                   onDrop={(e) => handleProductDrop(e, item)}
-                  style={{
-                    cursor: "move",
-                    opacity: draggedProductItem?.home_product_id === item.home_product_id ? 0.7 : 1,
-                    background: 'linear-gradient(135deg, rgba(20,20,20,0.95), rgba(26,26,46,0.95))',
-                    border: draggedProductItem?.home_product_id === item.home_product_id
-                      ? '2px solid #667eea'
-                      : '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!draggedProductItem?.home_product_id === item.home_product_id) {
-                      e.currentTarget.style.boxShadow = '0 12px 40px rgba(102, 126, 234, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.3)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.borderColor = '1px solid rgba(255, 255, 255, 0.08)';
-                  }}
                 >
                   {item.imagen && (
                     <img
                       src={`${API_URL}${item.imagen}`}
                       alt={item.nombre}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        objectFit: 'cover'
-                      }}
+                      className="admin-product-image"
                     />
                   )}
 
-                  <div style={{ padding: '16px' }}>
-                    <h6 style={{ color: '#ffffffd9', marginBottom: '8px', fontWeight: '700' }}>{item.nombre}</h6>
+                  <div className="admin-card-body">
+                    <div className="admin-card-title small">{item.nombre}</div>
 
-                    <p style={{ color: '#b8b8b8', marginBottom: '4px', fontSize: '12px' }}>
-                      Precio: <strong style={{ color: '#667eea' }}>${item.precio}</strong>
-                    </p>
+                    <p className="admin-meta">Precio: <strong className="admin-highlight">${item.precio}</strong></p>
 
-                    <p style={{ color: '#b8b8b8', marginBottom: '16px', fontSize: '12px' }}>
-                      Orden: <strong>{item.orden}</strong>
-                    </p>
+                    <p className="admin-meta">Orden: <strong>{item.orden}</strong></p>
 
                     <button
                       onClick={() => handleDeleteProduct(item.home_product_id)}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        background: 'rgba(220, 53, 69, 0.15)',
-                        color: '#ff6b6b',
-                        border: '2px solid rgba(220, 53, 69, 0.3)',
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(220, 53, 69, 0.25)';
-                        e.currentTarget.style.borderColor = '#ff6b6b';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(220, 53, 69, 0.15)';
-                        e.currentTarget.style.borderColor = 'rgba(220, 53, 69, 0.3)';
-                      }}
+                      className="admin-btn admin-btn-danger full"
+                      type="button"
                     >
                       🗑 Eliminar
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        )}
 
-      {homeProducts.length === 0 && search.length === 0 && (
-        <div style={{
-          background: 'rgba(102, 126, 234, 0.1)',
-          border: '1px solid rgba(102, 126, 234, 0.3)',
-          borderRadius: '12px',
-          padding: '20px',
-          textAlign: 'center',
-          color: '#b8b8b8'
-        }}>
-          No hay productos destacados. Búscalos con el buscador para agregarlos.
-        </div>
-      )}
-    </div>
+        {homeProducts.length === 0 && search.length === 0 && (
+          <div className="admin-empty-state">
+            No hay productos destacados. Búscalos con el buscador para agregarlos.
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -124,3 +124,29 @@ INSERT INTO marroquineria_subcategories (nombre) VALUES
 ('neceser'),
 ('riñonera'),
 ('billetera');
+
+-- Tabla de usuarios (incluye admins)
+CREATE TABLE IF NOT EXISTS users (
+  id             BIGSERIAL PRIMARY KEY,
+  email          TEXT NOT NULL UNIQUE,
+  password_hash  TEXT NOT NULL,
+  role           TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin','user')),
+  activo         BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Trigger para mantener updated_at
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
+CREATE TRIGGER trg_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
