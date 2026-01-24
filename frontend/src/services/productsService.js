@@ -18,7 +18,14 @@ function handleAuthError(res) {
   if (res.status === 401 || res.status === 403) {
     // token vencido o inválido
     localStorage.removeItem("authToken");
-    window.location.href = "/catalogo"; // fuerza salida limpia
+    const currentPath = window.location.pathname;
+    // Si estamos en una ruta de admin, redirigimos al login de admin
+    if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
+      window.location.href = '/admin/login';
+    } else {
+      // Para rutas públicas, enviamos al catálogo por defecto
+      window.location.href = '/catalogo';
+    }
     return true;
   }
   return false;
