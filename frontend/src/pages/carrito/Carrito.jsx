@@ -1,6 +1,8 @@
 import { useCart } from "../../context/CartContext";
 import { Link } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl";
+import { formatPrice } from "../../utils/formatPrice";
+import "./Carrito.css";
 
 function Carrito() {
   const {
@@ -22,10 +24,11 @@ function Carrito() {
     let message = "Hola! Quiero hacer el siguiente pedido:%0A%0A";
 
     cart.forEach((item) => {
-      message += `- ${item.quantity}x ${item.name} ($${item.price})%0A`;
+      const talle = item.selectedSize ? ` - Talle ${item.selectedSize}` : '';
+      message += `- ${item.quantity}x ${item.name}${talle} ($${formatPrice(item.price)})%0A`;
     });
 
-    message += `%0ATotal: $${totalPrice}`;
+    message += `%0ATotal: $${formatPrice(totalPrice)}`;
 
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(url, "_blank");
@@ -33,97 +36,103 @@ function Carrito() {
 
   if (cart.length === 0) {
     return (
-      <div className="container mt-4">
-        <h2>Tu carrito está vacío</h2>
-        <Link to="/catalogo" className="btn btn-primary mt-3">
-          Ir al catálogo
-        </Link>
+      <div className="container carrito-container">
+        <div className="carrito-vacio">
+          <h2>Tu carrito está vacío</h2>
+          <Link to="/catalogo" className="btn btn-primary mt-3">
+            Ir al catálogo
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Tu carrito</h2>
+    <div className="container carrito-container">
+      <h2 className="carrito-titulo">TU CARRITO</h2>
 
       {/* LISTA DE PRODUCTOS */}
       {cart.map((item) => (
-        <div key={item.id} className="card mb-3">
-          <div className="row g-0">
-            
-            {/* IMAGEN */}
-            <div className="col-md-3">
-              <img
-                src={getImageUrl(item.image)}
-                className="img-fluid rounded-start"
-                alt={item.name}
-              />
-            </div>
+        <div key={`${item.id}-${item.selectedSize || 'sin-talle'}`} className="carrito-item">
+          {/* IMAGEN */}
+          <img
+            src={getImageUrl(item.image)}
+            className="carrito-item-imagen"
+            alt={item.name}
+          />
 
-            {/* DETALLES */}
-            <div className="col-md-9">
-              <div className="card-body">
-                <h5 className="card-title">{item.name}</h5>
-                <p className="card-text text-muted">{item.category}</p>
-                <p className="fw-bold">${item.price}</p>
-
-                {/* CONTROLES DE CANTIDAD */}
-                <div className="d-flex align-items-center gap-3 mt-2">
-                  <button
-                    className="btn btn-outline-secondary"
-                    onClick={() => decreaseQuantity(item.id)}
-                  >
-                    -
-                  </button>
-
-                  <span>{item.quantity}</span>
-
-                  <button
-                    className="btn btn-outline-secondary"
-                    disabled={item.quantity >= item.stock}
-                    onClick={() => increaseQuantity(item.id)}
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* MENSAJE DE STOCK */}
-                {item.quantity >= item.stock && (
-                  <small className="text-danger d-block mt-1">
-                    Stock máximo alcanzado
-                  </small>
+          {/* DETALLES */}
+          <div className="carrito-item-body">
+            <div className="carrito-item-header">
+              <h5 className="carrito-item-titulo">
+                {item.name}
+                {item.selectedSize && (
+                  <span style={{ fontSize: '12px', backgroundColor: '#e7f3ff', color: '#0066cc', padding: '4px 8px', borderRadius: '4px' }}>
+                    Talle: {item.selectedSize}
+                  </span>
                 )}
-
-                {/* BOTÓN ELIMINAR */}
-                <button
-                  className="btn btn-danger mt-3"
-                  onClick={() => removeFromCart(item.id)}
-                >
-                  Eliminar
-                </button>
-              </div>
+              </h5>
+              <p className="carrito-item-categoria">{item.category}</p>
+              <p className="carrito-item-precio">${formatPrice(item.price)}</p>
             </div>
 
+            {/* CONTROLES DE CANTIDAD */}
+            <div className="carrito-controls">
+              <button
+                className="carrito-btn-cantidad"
+                onClick={() => decreaseQuantity(item.id, item.selectedSize)}
+              >
+                −
+              </button>
+
+              <span className="carrito-cantidad">{item.quantity}</span>
+
+              <button
+                className="carrito-btn-cantidad"
+                disabled={item.quantity >= item.stock}
+                onClick={() => increaseQuantity(item.id, item.selectedSize)}
+              >
+                +
+              </button>
+            </div>
+
+            {/* MENSAJE DE STOCK */}
+            {item.quantity >= item.stock && (
+              <small className="carrito-stock-warning">
+                Stock máximo alcanzado
+              </small>
+            )}
+
+            {/* BOTÓN ELIMINAR */}
+            <button
+              className="carrito-btn-eliminar"
+              onClick={() => removeFromCart(item.id, item.selectedSize)}
+            >
+              Eliminar del carrito
+            </button>
           </div>
         </div>
       ))}
 
       {/* TOTAL Y ACCIONES */}
-      <div className="mt-4">
-        <h4>
-          Total: <strong>${totalPrice}</strong>
-        </h4>
+      <div className="carrito-resumen">
+        <div className="carrito-total">
+          <span>Total:</span>
+          <strong>${formatPrice(totalPrice)}</strong>
+        </div>
 
-        <button className="btn btn-outline-danger me-3" onClick={clearCart}>
-          Vaciar carrito
-        </button>
+        <div className="carrito-acciones">
+          <button className="carrito-btn carrito-btn-vaciar" onClick={clearCart}>
+            Vaciar carrito
+          </button>
 
-        <button className="btn btn-success" onClick={handleSendWhatsApp}>
-          Enviar pedido por WhatsApp
-        </button>
+          <button className="carrito-btn carrito-btn-whatsapp" onClick={handleSendWhatsApp}>
+            Enviar pedido por WhatsApp
+          </button>
+        </div>
       </div>
     </div>
-  );
+  );;
 }
 
 export default Carrito;

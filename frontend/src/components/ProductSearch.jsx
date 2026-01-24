@@ -10,6 +10,7 @@ export default function ProductSearch({ value, onChange }) {
         padding: "0.5rem",
         marginBottom: "1rem",
       }}
+      className="search-input"
     />
   );
 }

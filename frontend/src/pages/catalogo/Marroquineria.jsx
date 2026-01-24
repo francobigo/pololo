@@ -1,69 +1,135 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getProducts } from "../../services/productsService";
-import { Link } from "react-router-dom";
-import { getImageUrl } from "../../utils/imageUrl"; // 👈 IMPORTANTE
+import { Link, useSearchParams } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUrl";
+import { formatPrice } from "../../utils/formatPrice";
+import FiltersSidebar from "../../components/filters/FiltersSidebar";
+import "./CatalogCards.css";
+import "./CatalogLayout.css";
 
 function Marroquineria() {
   const [products, setProducts] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+
+  const [searchParams] = useSearchParams();
+  const priceOrder = searchParams.get("price") || "desc"; // 🔹 default desc
+  const subcategoryParam = searchParams.get("subcategory") || "";
+  
+  const activeSubcategories = useMemo(() => {
+    return subcategoryParam 
+      ? subcategoryParam.split(",").map(s => s.toLowerCase())
+      : [];
+  }, [subcategoryParam]);
+
+  const subcategories = ["bolso", "mochila", "neceser", "riñonera", "billetera"];
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await getProducts("marroquineria");
+    setLoading(true);
+
+    getProducts({ category: "marroquineria" })
+      .then(data => {
         setProducts(data);
-      } catch (err) {
+        setFiltered(data);
+        setError(null);
+      })
+      .catch(err => {
         console.error(err);
         setError("No se pudieron cargar los productos de marroquinería");
-      } finally {
-        setLoading(false);
-      }
-    })();
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="container mt-4"><p>Cargando productos...</p></div>;
-  if (error)   return <div className="container mt-4"><p>{error}</p></div>;
+  useEffect(() => {
+    let result = [...products];
 
-  if (products.length === 0) {
-    return <div className="container mt-4"><p>No hay productos en esta categoría.</p></div>;
+    // Filtrar por subcategorías si hay seleccionadas
+    if (activeSubcategories.length > 0) {
+      result = result.filter(p => activeSubcategories.includes((p.subcategory || '').toLowerCase()));
+    }
+
+    // Ordenar por precio
+    if (priceOrder === "asc") {
+      result.sort((a, b) => a.price - b.price);
+    } else {
+      result.sort((a, b) => b.price - a.price);
+    }
+
+    setFiltered(result);
+  }, [priceOrder, products, activeSubcategories]);
+
+  if (loading) {
+    return (
+      <div className="container mt-4">
+        <p>Cargando productos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <p>{error}</p>
+      </div>
+    );
   }
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">Marroquinería</h1>
+      <h1 className="mb-4" style={{ fontSize: '2.5rem' }}>MARROQUINERIA</h1>
 
-      <div className="row">
-        {products.map((p) => (
-          <div key={p.id} className="col-md-4 mb-4">
-            <Link
-              to={`/producto/${p.id}`}
-              className="text-decoration-none text-dark"
-            >
-              <div className="card h-100">
+      <div className="catalog-layout">
+        <FiltersSidebar filters={["subcategory", "price"]} subcategories={subcategories} />
 
-                {/* 👇 CAMBIO PRINCIPAL */}
-                {p.image && (
-                  <img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
-                    className="card-img-top"
-                  />
-                )}
+        <div>
+          {filtered.length === 0 && (
+            <div className="no-products">
+              <p>No hay productos en esta categoría.</p>
+            </div>
+          )}
 
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title">{p.name}</h5>
-                  <p className="card-text flex-grow-1">{p.description}</p>
-                  <p className="fw-bold mb-1">${p.price}</p>
-                  <small className="text-muted">
-                    Categoría: {p.category}
-                  </small>
-                </div>
+          {filtered.length > 0 && (
+            <div className="products-grid">
+              {filtered.map((p) => {
+                const secondImage = p.images && p.images.length > 1 ? p.images[1].url : null;
+                const isHovered = hoveredProduct === p.id;
+                const displayImage = isHovered && secondImage ? secondImage : p.image;
+                
+                return (
+                <Link
+                  key={p.id}
+                  to={`/producto/${p.id}`}
+                  className="text-decoration-none"
+                  onMouseEnter={() => setHoveredProduct(p.id)}
+                  onMouseLeave={() => setHoveredProduct(null)}
+                >
+                  <div className="product-card">
+                    {displayImage && (
+                      <img
+                        src={getImageUrl(displayImage)}
+                        alt={p.name}
+                        className="catalog-product-image"
+                      />
+                    )}
 
-              </div>
-            </Link>
-          </div>
-        ))}
+                    <div className="product-body">
+                      <h5 className="product-name">{p.name}</h5>
+                      <p className="product-description">{p.description}</p>
+                      
+                      <div className="product-footer">
+                        <span className="product-price">${formatPrice(p.price)}</span>
+                        <span className="product-category">{p.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 import HomePage from "./pages/HomePage";
 import Contacto from "./pages/Contacto";
@@ -25,59 +26,45 @@ import AdminNuevoProducto from "./pages/admin/AdminNuevoProducto";
 import AdminEditarProducto from "./pages/admin/AdminEditarProducto";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import AdminHome from "./pages/admin/AdminHome";
+
+
 
 function App() {
   return (
     <Router>
-      {/* --- Layout general sólo para el sitio público --- */}
-      <Routes>
-        <Route
-          path="/*"
-          element={
-            <>
-              <Navbar />
-              <main style={{ minHeight: "80vh", padding: "1rem" }}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/catalogo" element={<Catalogo />} />
-                  <Route path="/catalogo/marroquineria" element={<Marroquineria />} />
-                  <Route path="/catalogo/remeras" element={<Remeras />} />
-                  <Route path="/catalogo/pantalones" element={<Pantalones />} />
-                  <Route path="/catalogo/buzos" element={<Buzos />} />
-                  <Route path="/contacto" element={<Contacto />} />
-                  <Route path="/nosotros" element={<Nosotros />} />
-                  <Route path="/producto/:id" element={<DetalleProducto />} />
-                  <Route path="/carrito" element={<Carrito />} />
-                  <Route path="/admin/login" element={<LoginAdmin />} />
-                  {/* 🔒 RUTAS PROTEGIDAS */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/admin/productos" element={<AdminProductos />} />
-                    <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
-                    <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />
-                  </Route>
-                </Routes>
-              </main>
-              <Footer />
-            </>
-          }
-        />
+      <Navbar />
+      <WhatsAppButton />
+      
+      <main style={{ minHeight: "80vh", padding: "2rem" }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/catalogo/marroquineria" element={<Marroquineria />} />
+          <Route path="/catalogo/remeras" element={<Remeras />} />
+          <Route path="/catalogo/pantalones" element={<Pantalones />} />
+          <Route path="/catalogo/buzos" element={<Buzos />} />
+          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/nosotros" element={<Nosotros />} />
+          <Route path="/producto/:id" element={<DetalleProducto />} />
+          <Route path="/carrito" element={<Carrito />} />
 
-        {/* --- Login Admin (página separada, sin navbar/footer) --- */}
-        <Route path="/admin/login" element={<LoginAdmin />} />
+          <Route path="/admin/login" element={<LoginAdmin />} />
 
-        {/* --- Panel Admin protegido --- */}
-        <Route
-          path="/admin"
-          element={
-            <RequireAuth>
-              <AdminPanel />
-            </RequireAuth>
-          }
-        />
-      </Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin/home" element={<AdminHome />} />
+            <Route path="/admin/productos" element={<AdminProductos />} />
+            <Route path="/admin/productos/nuevo" element={<AdminNuevoProducto />} />
+            <Route path="/admin/productos/:id/editar" element={<AdminEditarProducto />} />
+          </Route>
+        </Routes>
+      </main>
+
+      <Footer />
     </Router>
   );
 }
+
 
 export default App;
 

@@ -1,25 +1,41 @@
 // src/pages/admin/AdminEditarProducto.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { getProductById, updateProduct } from "../../services/productsService";
+import { getProductById, updateProduct, deleteProductImage } from "../../services/productsService";
+import { apiClient } from "../../services/apiClient";
+import { getImageUrl } from "../../utils/imageUrl";
+import { useToast } from "../../context/ToastContext.jsx";
 
 function AdminEditarProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     name: "",
     category: "",
+    subcategory: "",
     description: "",
     price: "",
-    image: "",      // URL actual (si viene de la BD)
-    stock: 0,
+    image: "",      // URL actual (principal)
     active: true,
-    imageFile: null // archivo nuevo (opcional)
   });
 
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [initialLoad, setInitialLoad] = useState(true);
+  
+  // Estados para talles
+  const [availableSizes, setAvailableSizes] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [marroquineriaSubcategories, setMarroquineriaSubcategories] = useState([]);
+  const [marroquineriaStock, setMarroquineriaStock] = useState(0);
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImageFiles, setNewImageFiles] = useState([]);
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
+  const [mainSelection, setMainSelection] = useState({ type: 'existing', id: null, index: null });
+  const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
+
 
   useEffect(() => {
     (async () => {
@@ -28,21 +44,90 @@ function AdminEditarProducto() {
         setForm({
           name: data.name || "",
           category: data.category || "marroquineria",
+          subcategory: data.subcategory || "",
           description: data.description || "",
           price: data.price ?? "",
           image: data.image || "",
-          stock: data.stock ?? 0,
           active: data.active ?? true,
-          imageFile: null,
         });
+
+        const apiImages = Array.isArray(data.images) ? data.images : [];
+        setExistingImages(apiImages);
+
+        const mainExisting = apiImages.find((img) => img.is_main) || apiImages[0];
+        if (mainExisting) {
+          setMainSelection({ type: 'existing', id: mainExisting.id, index: null });
+        }
+
+        // Cargar talles actuales del producto
+        if (data.sizes && data.sizes.items) {
+          // Convertir formato de respuesta a formato del formulario
+          const sizesData = data.sizes.items.map((item) => ({
+            size_id: item.id || item.size_id,
+            stock: item.stock || 0
+          }));
+          setSelectedSizes(sizesData);
+
+          // Si es marroquinería, extraer el stock del talle "Único"
+          if (data.category === 'marroquineria') {
+            const unicoSize = sizesData.find(s => s.size_id);
+            if (unicoSize) {
+              setMarroquineriaStock(unicoSize.stock);
+            }
+          }
+        }
       } catch (err) {
         console.error(err);
         setError("No se pudo cargar el producto");
       } finally {
         setLoading(false);
+        setInitialLoad(false);
       }
     })();
   }, [id]);
+
+  // Cargar talles disponibles cuando cambia la categoría
+  useEffect(() => {
+    const loadSizes = async () => {
+      const category = form.category;
+      
+      if (category === 'marroquineria') {
+        setAvailableSizes([]);
+        if (!initialLoad) {
+          setSelectedSizes([]);
+        setMarroquineriaSubcategories([
+          { id: 1, nombre: 'bolso' },
+          { id: 2, nombre: 'mochila' },
+          { id: 3, nombre: 'neceser' },
+          { id: 4, nombre: 'riñonera' },
+          { id: 5, nombre: 'billetera' }
+        ]);
+        }
+        return;
+      }
+
+      let sizeType = '';
+      if (category === 'remeras' || category === 'buzos') {
+        sizeType = 'ropa';
+      } else if (category === 'pantalones') {
+        sizeType = 'pantalon';
+      }
+
+      if (sizeType) {
+        try {
+          const response = await apiClient.get(`/products/sizes/type/${sizeType}`);
+          setAvailableSizes(response.data);
+        } catch (err) {
+          console.error('Error cargando talles:', err);
+          setAvailableSizes([]);
+        }
+      }
+    };
+
+    if (form.category) {
+      loadSizes();
+    }
+  }, [form.category, initialLoad]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,30 +139,145 @@ function AdminEditarProducto() {
           ? checked
           : name === "price"
           ? value
-          : name === "stock"
-          ? value
           : value,
     }));
   };
 
-  // 👉 archivo de imagen nuevo
+  // 👉 manejo de talles
+  const handleSizeStockChange = (sizeId, stock) => {
+    setSelectedSizes((prev) => {
+      const existing = prev.find((s) => s.size_id === sizeId);
+      
+      if (existing) {
+        return prev.map((s) =>
+          s.size_id === sizeId ? { ...s, stock: parseInt(stock) || 0 } : s
+        );
+      } else {
+        return [...prev, { size_id: sizeId, stock: parseInt(stock) || 0 }];
+      }
+    });
+  };
+
+  // 👉 nuevas imágenes (múltiples)
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setForm((prev) => ({
-      ...prev,
-      imageFile: file || null,
-    }));
+    const files = Array.from(e.target.files || []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const minSize = 10 * 1024;
+    const maxSize = 2 * 1024 * 1024;
+
+    const file = files[0]; // Solo procesar la primera imagen seleccionada
+
+    if (file.size < minSize) {
+      setError("La imagen es muy pequeña. Mínimo 10KB");
+      e.target.value = ''; // Limpiar el input
+      return;
+    }
+    if (file.size > maxSize) {
+      setError("La imagen no puede superar los 2MB");
+      e.target.value = ''; // Limpiar el input
+      return;
+    }
+    if (!validTypes.includes(file.type)) {
+      setError("Formato no permitido. Solo JPG, PNG o WEBP");
+      e.target.value = ''; // Limpiar el input
+      return;
+    }
+
+    setError(null);
+    // Agregar la nueva imagen a las existentes
+    setNewImageFiles((prev) => [...prev, file]);
+    setNewImagePreviews((prev) => [...prev, URL.createObjectURL(file)]);
+    e.target.value = ''; // Limpiar el input para poder agregar más
+
+    // Si no hay selección principal actual, seleccionar la primera nueva
+    if (!mainSelection.id && mainSelection.type !== 'new') {
+      setMainSelection({ type: 'new', id: null, index: 0 });
+    }
+  };
+
+  const removeNewImage = (index) => {
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+
+    setMainSelection((prev) => {
+      if (prev.type !== 'new') return prev;
+      if (prev.index === index) {
+        return { type: 'existing', id: prev.id, index: null };
+      }
+      if (prev.index !== null && prev.index > index) {
+        return { ...prev, index: prev.index - 1 };
+      }
+      return prev;
+    });
+  };
+
+  const deleteExistingImage = async (imageId) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
+      return;
+    }
+
+    try {
+      await deleteProductImage(id, imageId);
+      
+      // Actualizar el estado local
+      const remainingImages = existingImages.filter(img => img.id !== imageId);
+      setExistingImages(remainingImages);
+
+      // Si eliminamos la imagen seleccionada como main, ajustar la selección
+      if (mainSelection.type === 'existing' && mainSelection.id === imageId) {
+        if (remainingImages.length > 0) {
+          // Buscar la nueva imagen principal o seleccionar la primera
+          const newMain = remainingImages.find(img => img.is_main) || remainingImages[0];
+          setMainSelection({ type: 'existing', id: newMain.id, index: null });
+        } else if (newImageFiles.length > 0) {
+          // Si no quedan imágenes existentes pero hay nuevas, seleccionar la primera nueva
+          setMainSelection({ type: 'new', id: null, index: 0 });
+        } else {
+          setMainSelection({ type: null, id: null, index: null });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error al eliminar la imagen', 'error');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
+    // Validar que marroquinería tenga subcategoría
+    if (form.category === 'marroquineria' && !form.subcategory) {
+      setError("Debes seleccionar una subcategoría para marroquinería");
+      return;
+    }
+
+    // Validar stock de marroquinería
+    if (form.category === 'marroquineria' && marroquineriaStock <= 0) {
+      setError("El stock de marroquinería debe ser mayor a 0");
+      return;
+    }
+
     try {
+      // Para marroquinería, usar el stock actualizado
+      let sizes = selectedSizes.filter((s) => s.stock > 0);
+      
+      if (form.category === 'marroquineria') {
+        sizes = [{ size_type: 'marroquineria', size_value: 'Único', stock: marroquineriaStock }];
+      }
+
       await updateProduct(id, {
         ...form,
         price: parseFloat(form.price),
-        stock: parseInt(form.stock || 0, 10),
+        sizes: sizes,
+        imageFiles: newImageFiles,
+        mainImageId: mainSelection.type === 'existing' ? mainSelection.id : null,
+        mainImageIndex: mainSelection.type === 'new' ? mainSelection.index : null,
       });
 
       navigate("/admin/productos");
@@ -144,6 +344,27 @@ function AdminEditarProducto() {
           </select>
         </div>
 
+        {/* SUBCATEGORÍA PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Subcategoría</label>
+            <select
+              className="form-select"
+              name="subcategory"
+              value={form.subcategory}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona una subcategoría</option>
+              {marroquineriaSubcategories.map((sub) => (
+                <option key={sub.id} value={sub.nombre}>
+                  {sub.nombre.charAt(0).toUpperCase() + sub.nombre.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="mb-3">
           <label className="form-label">Descripción</label>
           <textarea
@@ -168,41 +389,161 @@ function AdminEditarProducto() {
           />
         </div>
 
-        {/* IMAGEN ACTUAL + CAMBIAR IMAGEN */}
-        <div className="mb-3">
-          <label className="form-label">Imagen actual</label>
-          {form.image ? (
-            <div className="mb-2">
-              <img
-                src={form.image}
-                alt={form.name}
-                style={{ maxWidth: "150px", borderRadius: "4px" }}
-              />
+        {/* IMÁGENES ACTUALES */}
+        {existingImages.length > 0 && (
+          <div className="mb-3">
+            <label className="form-label">Imágenes actuales</label>
+            <div className="d-flex flex-wrap gap-3">
+              {existingImages.map((img) => (
+                <div key={img.id} className="border rounded p-2" style={{ width: "160px", position: "relative" }}>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    style={{
+                      position: "absolute",
+                      top: "5px",
+                      right: "5px",
+                      padding: "2px 6px",
+                      fontSize: "12px",
+                      borderRadius: "50%",
+                      zIndex: 1
+                    }}
+                    onClick={() => deleteExistingImage(img.id)}
+                    title="Eliminar imagen"
+                  >
+                    ×
+                  </button>
+                  <img
+                    src={getImageUrl(img.url)}
+                    alt={form.name}
+                    className="img-fluid rounded"
+                    style={{ width: "100%", height: "120px", objectFit: "cover" }}
+                  />
+                  <div className="form-check mt-2">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="mainImage"
+                      checked={mainSelection.type === 'existing' && mainSelection.id === img.id}
+                      onChange={() => setMainSelection({ type: 'existing', id: img.id, index: null })}
+                    />
+                    <label className="form-check-label">Principal</label>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <p className="text-muted">Este producto no tiene imagen.</p>
-          )}
+          </div>
+        )}
 
-          <label className="form-label">Cambiar imagen</label>
+        {/* NUEVAS IMÁGENES */}
+        <div className="mb-3">
+          <label className="form-label">Agregar nuevas imágenes</label>
           <input
             type="file"
             className="form-control"
             accept="image/*"
             onChange={handleFileChange}
           />
+          <div className="form-text">
+            • Selecciona una imagen a la vez y haz clic en "Seleccionar archivo" para agregar más<br />
+            • Formatos: JPG, PNG o WEBP | Máx: 2MB cada una
+          </div>
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Stock</label>
-          <input
-            type="number"
-            className="form-control"
-            name="stock"
-            value={form.stock}
-            onChange={handleChange}
-            min="0"
-          />
-        </div>
+        {newImagePreviews.length > 0 && (
+          <div className="mb-3">
+            <p className="mb-2">Nuevas imágenes (elige la principal si corresponde)</p>
+            <div className="d-flex flex-wrap gap-3">
+              {newImagePreviews.map((preview, idx) => (
+                <div key={idx} className="border rounded p-2" style={{ width: "160px" }}>
+                  <img
+                    src={preview}
+                    alt={`Nueva ${idx + 1}`}
+                    className="img-fluid rounded"
+                    style={{ width: "100%", height: "120px", objectFit: "cover" }}
+                  />
+                  <div className="form-check mt-2">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="mainImage"
+                      checked={mainSelection.type === 'new' && mainSelection.index === idx}
+                      onChange={() => setMainSelection({ type: 'new', id: null, index: idx })}
+                    />
+                    <label className="form-check-label">Principal</label>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm w-100 mt-2"
+                    onClick={() => removeNewImage(idx)}
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+       {/* STOCK PARA MARROQUINERÍA */}
+        {form.category === 'marroquineria' && (
+          <div className="mb-3">
+            <label className="form-label">Stock</label>
+            <input
+              type="number"
+              className="form-control"
+              value={marroquineriaStock}
+              onChange={(e) => setMarroquineriaStock(parseInt(e.target.value) || 0)}
+              required
+              min="0"
+              placeholder="Ingresa la cantidad en stock"
+            />
+          </div>
+        )}
+
+       {/* TALLES (solo si no es marroquinería) */}
+{form.category !== 'marroquineria' && availableSizes.length > 0 && (
+  <div className="mb-3">
+    <label className="form-label">Talles y Stock</label>
+    <div className="border rounded p-3">
+      {[...availableSizes]
+        .sort((a, b) => {
+          // 🟦 Pantalones → orden numérico
+          if (form.category === 'pantalones') {
+            return Number(a.size) - Number(b.size);
+          }
+
+          // 🟩 Remeras / Buzos → orden correcto de ropa
+          const ORDER_ROPA = ["XS", "S", "M", "L", "XL"];
+          return ORDER_ROPA.indexOf(a.size) - ORDER_ROPA.indexOf(b.size);
+        })
+        .map((size) => {
+          const currentStock =
+            selectedSizes.find((s) => s.size_id === size.id)?.stock || 0;
+
+          return (
+            <div key={size.id} className="row mb-2 align-items-center">
+              <div className="col-3">
+                <strong>{size.size}</strong>
+              </div>
+              <div className="col-5">
+                <input
+                  type="number"
+                  className="form-control form-control-sm"
+                  placeholder="Stock"
+                  min="0"
+                  value={currentStock}
+                  onChange={(e) =>
+                    handleSizeStockChange(size.id, e.target.value)
+                  }
+                />
+              </div>
+            </div>
+          );
+        })}
+    </div>
+  </div>
+)}
 
         <div className="form-check mb-3">
           <input
