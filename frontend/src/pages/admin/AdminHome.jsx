@@ -457,7 +457,7 @@ const handleDrop = async (e, targetItem) => {
   return (
     <div className="admin-home-container">
       <div className="admin-header">
-        <h1 className="admin-titulo">Admin Home</h1>
+        <h1 className="admin-titulo">ADMINISTRAR HOME</h1>
         <div className="admin-btn-group">
           <Link to="/admin/home" className="admin-btn-nav active">
             Home
