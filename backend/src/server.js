@@ -16,11 +16,16 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// --- CONFIGURACIÓN DE CORS MEJORADA ---
+app.use(cors({
+  origin: '*', // Permite que tu frontend en Vercel se conecte sin bloqueos
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Middlewares globales
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 // Rutas
 app.use("/api/home", homeRoutes);
@@ -32,12 +37,13 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Resto de la API
 app.use("/api", router);
 
-// Root
+// Root (Útil para verificar que el backend está vivo)
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
-    message: "API root",
-    available: ["/api/health", "/api/auth/login"],
+    message: "Pololo API is running",
+    database: "Connected",
+    timestamp: new Date()
   });
 });
 
@@ -46,12 +52,16 @@ app.use((req, res) => {
   res.status(404).json({ message: "Ruta no encontrada" });
 });
 
-// Start server
+// Iniciar servidor con el test de DB
 const startServer = async () => {
-  await testDBConnection();
-  app.listen(envs.PORT, () => {
-    console.log(`✅ Backend escuchando en http://localhost:${envs.PORT}`);
-  });
+  try {
+    await testDBConnection();
+    app.listen(envs.PORT, () => {
+      console.log(`✅ Backend escuchando en el puerto ${envs.PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ No se pudo iniciar el servidor debido a la base de datos:", error);
+  }
 };
 
 startServer();
