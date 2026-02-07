@@ -16,6 +16,7 @@ function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const searchRef = useRef(null);
+  const navbarCollapseRef = useRef(null);
 
   // Logo configuration: allow overriding via Vite env vars for flexible variants
   const logoUrl = import.meta.env.VITE_LOGO_URL || "/logo2.png";
@@ -59,7 +60,17 @@ function Navbar() {
   // 🚀 NUEVA FUNCIÓN PARA SALIR Y REDIRIGIR
   const handleLogout = () => {
     logout(); // Llama al logout del contexto (limpia estado y localStorage)
-   
+    closeNavbar();
+  };
+
+  // Cerrar navbar en mobile
+  const closeNavbar = () => {
+    if (navbarCollapseRef.current) {
+      const bsCollapse = new window.bootstrap.Collapse(navbarCollapseRef.current, {
+        toggle: false
+      });
+      bsCollapse.hide();
+    }
   };
 
   const handleSearch = (e) => {
@@ -67,6 +78,7 @@ function Navbar() {
 
     if (search.trim() !== "") {
       setShowSuggestions(false);
+      closeNavbar();
       navigate(`/catalogo?search=${encodeURIComponent(search)}`);
     }
   };
@@ -75,6 +87,7 @@ function Navbar() {
     setSearch("");
     setSuggestions([]);
     setShowSuggestions(false);
+    closeNavbar();
     navigate(`/producto/${productId}`);
   };
 
@@ -132,37 +145,37 @@ function Navbar() {
       </ul>
 
       {/* COLLAPSE PARA MOBILE */}
-      <div className="collapse navbar-collapse" id="navbarNav">
+      <div className="collapse navbar-collapse" id="navbarNav" ref={navbarCollapseRef}>
 
         {/* LINKS PRINCIPALES (MOBILE) */}
         <ul className="navbar-nav me-auto navbar-links-mobile">
 
           <li className="nav-item">
-            <Link className="nav-link" to="/catalogo">
+            <Link className="nav-link" to="/catalogo" onClick={closeNavbar}>
               Catálogo
             </Link>
           </li>
 
           <li className="nav-item">
-            <Link className="nav-link" to="/catalogo/marroquineria">
+            <Link className="nav-link" to="/catalogo/marroquineria" onClick={closeNavbar}>
               Marroquinería
             </Link>
           </li>
 
           <li className="nav-item">
-            <Link className="nav-link" to="/catalogo/remeras">
+            <Link className="nav-link" to="/catalogo/remeras" onClick={closeNavbar}>
               Remeras
             </Link>
           </li>
 
           <li className="nav-item">
-            <Link className="nav-link" to="/catalogo/pantalones">
+            <Link className="nav-link" to="/catalogo/pantalones" onClick={closeNavbar}>
               Pantalones
             </Link>
           </li>
 
           <li className="nav-item">
-            <Link className="nav-link" to="/catalogo/buzos">
+            <Link className="nav-link" to="/catalogo/buzos" onClick={closeNavbar}>
               Buzos
             </Link>
           </li>
